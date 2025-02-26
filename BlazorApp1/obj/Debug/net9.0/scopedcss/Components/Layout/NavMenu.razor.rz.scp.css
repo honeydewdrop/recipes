@@ -1,0 +1,30 @@
+body[b-5bndfk4shp], ul[b-5bndfk4shp] {
+    margin: 0;
+    height: 20%;
+}
+.topnav[b-5bndfk4shp] {
+    background-color: lightgreen;
+    color: gray;
+    width: 100%;
+    height: 90%;
+    overflow: hidden;
+    font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    font-size: 30px;
+    flex-wrap: nowrap;
+  }
+
+.topnav a[b-5bndfk4shp] {
+    color: gray;
+    text-decoration: none;
+    margin-right: 50px;
+    margin-left: 50px;
+}
+
+.topnav ul[b-5bndfk4shp] {
+    margin: 0;
+    padding: 0;
+    display: flex; /* Use flexbox for horizontal layout */
+    flex-direction: row;
+    justify-content: space-around; /* Distribute items evenly */
+    font-size: 30px;
+  }
