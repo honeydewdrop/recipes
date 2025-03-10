@@ -1,5 +1,8 @@
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
 }
 
 a, .btn-link {
@@ -18,6 +21,7 @@ a, .btn-link {
 
 .content {
     padding-top: 1.1rem;
+    overflow: auto;
 }
 
 h1:focus {

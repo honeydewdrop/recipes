@@ -14,11 +14,14 @@ body[b-28ri2sy5jg] {
     width: 100%;
     border: 2px solid #EFEEEE;
     background-color: #EFEEEE;
+    white-space: nowrap; 
 }
 
 .gallery[b-28ri2sy5jg] {
     display: flex;
-    animation: moveGallery-b-28ri2sy5jg 20s linear infinite;
+    width: max-content;
+    flex-wrap: nowrap;
+    animation: moveGallery-b-28ri2sy5jg 20s linear infinite; /* Adjust speed as needed */
 }
 
 .gallery img[b-28ri2sy5jg] {

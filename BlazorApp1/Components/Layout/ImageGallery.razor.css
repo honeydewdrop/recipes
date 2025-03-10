@@ -14,11 +14,14 @@ body {
     width: 100%;
     border: 2px solid #EFEEEE;
     background-color: #EFEEEE;
+    white-space: nowrap; 
 }
 
 .gallery {
     display: flex;
-    animation: moveGallery 20s linear infinite;
+    width: max-content;
+    flex-wrap: nowrap;
+    animation: moveGallery 20s linear infinite; /* Adjust speed as needed */
 }
 
 .gallery img {
