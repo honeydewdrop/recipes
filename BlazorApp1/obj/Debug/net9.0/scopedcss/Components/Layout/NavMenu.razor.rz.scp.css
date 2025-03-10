@@ -3,8 +3,8 @@ body[b-5bndfk4shp], ul[b-5bndfk4shp] {
     height: 20%;
 }
 .topnav[b-5bndfk4shp] {
-    background-color: lightgreen;
-    color: gray;
+    background-color: #EFEEEE;
+    color: #0A2463;
     width: 100%;
     height: 90%;
     overflow: hidden;
@@ -14,7 +14,7 @@ body[b-5bndfk4shp], ul[b-5bndfk4shp] {
   }
 
 .topnav a[b-5bndfk4shp] {
-    color: gray;
+    color: #0A2463;
     text-decoration: none;
     margin-right: 50px;
     margin-left: 50px;

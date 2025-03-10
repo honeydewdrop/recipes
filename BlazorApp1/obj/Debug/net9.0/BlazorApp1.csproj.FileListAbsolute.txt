@@ -76,5 +76,8 @@ c:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\refint\BlazorApp1.dll
 c:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\BlazorApp1.pdb
 c:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\BlazorApp1.genruntimeconfig.cache
 c:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\ref\BlazorApp1.dll
-c:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\compressed\ysu4imbah3-gt5f64vh8i.gz
-c:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\compressed\uxxncn5hnr-gt5f64vh8i.gz
+c:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\scopedcss\Components\Layout\SearchBar.razor.rz.scp.css
+c:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\compressed\q05pxow4sc-o9joap56x6.gz
+c:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\scopedcss\Components\Layout\ImageGallery.razor.rz.scp.css
+c:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\compressed\ysu4imbah3-n7v5xn6oik.gz
+c:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\compressed\uxxncn5hnr-n7v5xn6oik.gz

@@ -1,0 +1,39 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    margin: 0;
+    background-color: #EFEEEE;
+}
+
+.gallery-container {
+    margin-top: 4em;
+    overflow: hidden;
+    height: 50vh;
+    width: 100%;
+    border: 2px solid #EFEEEE;
+    background-color: #EFEEEE;
+}
+
+.gallery {
+    display: flex;
+    animation: moveGallery 20s linear infinite;
+}
+
+.gallery img {
+    width: 80%;
+    height: 40vh;
+    margin: 10px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+@keyframes moveGallery {
+    0% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
