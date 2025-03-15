@@ -1,46 +1,223 @@
-<div id="search">
-	<svg viewBox="0 0 420 60" xmlns="http://www.w3.org/2000/svg">
-		<rect class="bar"/>
-		
-		<g class="magnifier">
-			<circle class="glass"/>
-			<line class="handle" x1="32" y1="32" x2="44" y2="44"></line>
-		</g>
+@page "/ingredient-search"
+@using System.Timers
+@using System.Net.Http.Json
+@using System.Text.Json.Serialization
+@using System.Net.Http.Headers
+@rendermode InteractiveServer
+@inject IConfiguration Configuration
+@inject ILogger<SearchBar> Logger
 
-		<g class="sparks">
-			<circle class="spark"/>
-			<circle class="spark"/>
-			<circle class="spark"/>
-		</g>
+<div class="search-container">
+    <div class="search-box">
+        <input type="text" 
+               @bind="searchQuery"
+               @bind:event="oninput"
+               @onkeyup="HandleSearch"
+               placeholder="Search for ingredients..."
+               class="form-control" />
+    </div>
+    
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-2">@errorMessage</div>
+    }
 
-		<g class="burst pattern-one">
-			<circle class="particle circle"/>
-			<path class="particle triangle"/>
-			<circle class="particle circle"/>
-			<path class="particle plus"/>
-			<rect class="particle rect"/>
-			<path class="particle triangle"/>
-		</g>
-		<g class="burst pattern-two">
-			<path class="particle plus"/>
-			<circle class="particle circle"/>
-			<path class="particle triangle"/>
-			<rect class="particle rect"/>
-			<circle class="particle circle"/>
-			<path class="particle plus"/>
-		</g>
-		<g class="burst pattern-three">
-			<circle class="particle circle"/>
-			<rect class="particle rect"/>
-			<path class="particle plus"/>
-			<path class="particle triangle"/>
-			<rect class="particle rect"/>
-			<path class="particle plus"/>
-		</g>
-	</svg>
-	<input type=search name=q aria-label="Search for inspiration"/>
+    @if (suggestions.Any())
+    {
+        <div class="suggestions-list">
+            @foreach (var suggestion in suggestions)
+            {
+                <div class="suggestion-item" @onclick="() => SelectIngredient(suggestion)">
+                    @suggestion.Name
+                </div>
+            }
+        </div>
+    }
 </div>
 
-<div id="results">
-	
-</div>
+@code {
+    private string searchQuery = "";
+    private List<IngredientSuggestion> suggestions = new();
+    private string? errorMessage;
+    private string ApiKey => Configuration["Spoonacular:ApiKey"];
+    private Timer? debounceTimer;
+    private const int DEBOUNCE_DELAY = 500; // Wait 500ms before making API call
+    private DateTime lastRequestTime = DateTime.MinValue;
+    private const int MIN_REQUEST_INTERVAL = 1000; // Minimum 1 second between requests
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Logger.LogInformation("Component rendered for the first time");
+            Console.WriteLine("Component rendered for the first time");
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Logger.LogInformation("IngredientSearch component initialized");
+        Console.WriteLine("IngredientSearch component initialized");
+        if (string.IsNullOrEmpty(ApiKey))
+        {
+            errorMessage = "RapidAPI key is not configured";
+            Logger.LogError("RapidAPI key is missing");
+            Console.WriteLine("RapidAPI key is missing");
+        }
+        else
+        {
+            Console.WriteLine($"API Key found: {ApiKey.Substring(0, 5)}...");
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Setup debounce timer
+        debounceTimer?.Dispose();
+        debounceTimer = new Timer(DEBOUNCE_DELAY);
+        debounceTimer.Elapsed += async (sender, e) => await SearchWithThrottle();
+        debounceTimer.AutoReset = false;
+    }
+
+    private async Task HandleSearch(KeyboardEventArgs e)
+    {
+        Console.WriteLine($"HandleSearch called with query: {searchQuery}");
+        errorMessage = null;
+        
+        if (string.IsNullOrWhiteSpace(searchQuery) || searchQuery.Length < 2)
+        {
+            suggestions.Clear();
+            return;
+        }
+
+        // Reset and start the debounce timer
+        debounceTimer?.Stop();
+        debounceTimer?.Start();
+    }
+
+    private async Task SearchWithThrottle()
+    {
+        // Ensure we're not making requests too frequently
+        var timeSinceLastRequest = DateTime.Now - lastRequestTime;
+        if (timeSinceLastRequest.TotalMilliseconds < MIN_REQUEST_INTERVAL)
+        {
+            await Task.Delay(MIN_REQUEST_INTERVAL - (int)timeSinceLastRequest.TotalMilliseconds);
+        }
+
+        try
+        {
+            Console.WriteLine($"Making API call for query: {searchQuery}");
+            
+            using var client = new HttpClient();
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri($"https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/food/ingredients/autocomplete?query={Uri.EscapeDataString(searchQuery)}&number=5"),
+                Headers =
+                {
+                    { "x-rapidapi-key", ApiKey },
+                    { "x-rapidapi-host", "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com" },
+                },
+            };
+
+            lastRequestTime = DateTime.Now;
+            var response = await client.SendAsync(request);
+            
+            if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                errorMessage = "Rate limit reached. Please wait a moment before trying again.";
+                return;
+            }
+
+            response.EnsureSuccessStatusCode();
+            var jsonString = await response.Content.ReadAsStringAsync();
+            Logger.LogInformation($"API response received: {jsonString}");
+            
+            var result = System.Text.Json.JsonSerializer.Deserialize<List<IngredientSuggestion>>(jsonString);
+            await InvokeAsync(() => 
+            {
+                suggestions = result ?? new List<IngredientSuggestion>();
+                StateHasChanged();
+            });
+        }
+        catch (Exception ex)
+        {
+            await InvokeAsync(() => 
+            {
+                errorMessage = ex.Message.Contains("429") 
+                    ? "Rate limit reached. Please wait a moment before trying again."
+                    : $"Error: {ex.Message}";
+                suggestions.Clear();
+                StateHasChanged();
+            });
+        }
+    }
+
+    private void SelectIngredient(IngredientSuggestion ingredient)
+    {
+        searchQuery = ingredient.Name;
+        suggestions.Clear();
+        Logger.LogInformation($"Selected ingredient: {ingredient.Name}");
+    }
+
+    public class IngredientSuggestion
+    {
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = "";
+
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+    }
+
+    public void Dispose()
+    {
+        debounceTimer?.Dispose();
+    }
+}
+
+<style>
+    .search-container {
+        position: relative;
+        max-width: 500px;
+        margin: 20px auto;
+    }
+
+    .search-box {
+        width: 100%;
+    }
+
+    .suggestions-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        z-index: 1000;
+    }
+
+    .suggestion-item {
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .suggestion-item:hover {
+        background-color: #f5f5f5;
+    }
+
+    .alert {
+        margin-top: 1rem;
+        padding: 0.75rem 1.25rem;
+        border: 1px solid transparent;
+        border-radius: 0.25rem;
+    }
+
+    .alert-danger {
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+    }
+</style> 
