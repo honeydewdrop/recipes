@@ -9,14 +9,14 @@
 
 <div class="search-container">
     <div class="search-box">
-        <input type="text" 
+        <input type="text"
                @bind="searchQuery"
                @bind:event="oninput"
                @onkeyup="HandleSearch"
                placeholder="Search for ingredients..."
                class="form-control" />
     </div>
-    
+
     @if (!string.IsNullOrEmpty(errorMessage))
     {
         <div class="alert alert-danger mt-2">@errorMessage</div>
@@ -33,6 +33,37 @@
             }
         </div>
     }
+
+    @if (selectedIngredients.Any())
+    {
+        <div class="selected-ingredients">
+            <h5>Selected Ingredients:</h5>
+            <ul>
+                @foreach (var ingredient in selectedIngredients)
+                {
+                    <li>@ingredient.Name <button @onclick="() => RemoveIngredient(ingredient)">Remove</button></li>
+                }
+            </ul>
+            <button @onclick="FetchRecipes" class="btn btn-primary mt-2">Find Recipes</button>
+        </div>
+    }
+
+    @if (recipes.Any())
+    {
+        <div class="recipe-list mt-4">
+            <h5>Recipes Found:</h5>
+            <ul>
+                @foreach (var recipe in recipes)
+                {
+                        <li>
+                            <h6>@recipe.Title</h6>
+                            <p>@recipe.Instructions</p>
+                            <img src="@recipe.Image" alt="@recipe.Title" style="max-width: 100%; height: auto;" />
+                        </li>
+                }
+            </ul>
+        </div>
+    }
 </div>
 
 @code {
@@ -44,29 +75,18 @@
     private const int DEBOUNCE_DELAY = 500; // Wait 500ms before making API call
     private DateTime lastRequestTime = DateTime.MinValue;
     private const int MIN_REQUEST_INTERVAL = 1000; // Minimum 1 second between requests
+    private bool isSearching = false; // To prevent overlapping requests
 
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (firstRender)
-        {
-            Logger.LogInformation("Component rendered for the first time");
-            Console.WriteLine("Component rendered for the first time");
-        }
-    }
+    private List<IngredientSuggestion> selectedIngredients = new();
+    private List<Recipe> recipes = new();
 
     protected override void OnInitialized()
     {
         Logger.LogInformation("IngredientSearch component initialized");
-        Console.WriteLine("IngredientSearch component initialized");
         if (string.IsNullOrEmpty(ApiKey))
         {
             errorMessage = "RapidAPI key is not configured";
             Logger.LogError("RapidAPI key is missing");
-            Console.WriteLine("RapidAPI key is missing");
-        }
-        else
-        {
-            Console.WriteLine($"API Key found: {ApiKey.Substring(0, 5)}...");
         }
     }
 
@@ -81,9 +101,8 @@
 
     private async Task HandleSearch(KeyboardEventArgs e)
     {
-        Console.WriteLine($"HandleSearch called with query: {searchQuery}");
         errorMessage = null;
-        
+
         if (string.IsNullOrWhiteSpace(searchQuery) || searchQuery.Length < 2)
         {
             suggestions.Clear();
@@ -97,17 +116,18 @@
 
     private async Task SearchWithThrottle()
     {
-        // Ensure we're not making requests too frequently
-        var timeSinceLastRequest = DateTime.Now - lastRequestTime;
-        if (timeSinceLastRequest.TotalMilliseconds < MIN_REQUEST_INTERVAL)
-        {
-            await Task.Delay(MIN_REQUEST_INTERVAL - (int)timeSinceLastRequest.TotalMilliseconds);
-        }
+        if (isSearching) return; // Prevent overlapping requests
+        isSearching = true;
 
         try
         {
-            Console.WriteLine($"Making API call for query: {searchQuery}");
-            
+            // Ensure we're not making requests too frequently
+            var timeSinceLastRequest = DateTime.Now - lastRequestTime;
+            if (timeSinceLastRequest.TotalMilliseconds < MIN_REQUEST_INTERVAL)
+            {
+                await Task.Delay(MIN_REQUEST_INTERVAL - (int)timeSinceLastRequest.TotalMilliseconds);
+            }
+
             using var client = new HttpClient();
             var request = new HttpRequestMessage
             {
@@ -122,7 +142,7 @@
 
             lastRequestTime = DateTime.Now;
             var response = await client.SendAsync(request);
-            
+
             if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
             {
                 errorMessage = "Rate limit reached. Please wait a moment before trying again.";
@@ -132,9 +152,9 @@
             response.EnsureSuccessStatusCode();
             var jsonString = await response.Content.ReadAsStringAsync();
             Logger.LogInformation($"API response received: {jsonString}");
-            
+
             var result = System.Text.Json.JsonSerializer.Deserialize<List<IngredientSuggestion>>(jsonString);
-            await InvokeAsync(() => 
+            await InvokeAsync(() =>
             {
                 suggestions = result ?? new List<IngredientSuggestion>();
                 StateHasChanged();
@@ -142,22 +162,97 @@
         }
         catch (Exception ex)
         {
-            await InvokeAsync(() => 
+            await InvokeAsync(() =>
             {
-                errorMessage = ex.Message.Contains("429") 
+                errorMessage = ex.Message.Contains("429")
                     ? "Rate limit reached. Please wait a moment before trying again."
                     : $"Error: {ex.Message}";
                 suggestions.Clear();
                 StateHasChanged();
             });
         }
+        finally
+        {
+            isSearching = false; // Reset the flag
+        }
     }
 
     private void SelectIngredient(IngredientSuggestion ingredient)
     {
-        searchQuery = ingredient.Name;
+        if (!selectedIngredients.Any(i => i.Id == ingredient.Id))
+        {
+            selectedIngredients.Add(ingredient);
+        }
+        searchQuery = "";
         suggestions.Clear();
         Logger.LogInformation($"Selected ingredient: {ingredient.Name}");
+    }
+
+    private void RemoveIngredient(IngredientSuggestion ingredient)
+    {
+        selectedIngredients.Remove(ingredient);
+        Logger.LogInformation($"Removed ingredient: {ingredient.Name}");
+    }
+
+    private async Task FetchRecipes()
+    {
+        if (!selectedIngredients.Any())
+        {
+            errorMessage = "Please select at least one ingredient.";
+            return;
+        }
+
+        var ingredientNames = string.Join(",", selectedIngredients.Select(i => i.Name));
+
+        try
+        {
+            using var client = new HttpClient();
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri($"https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/recipes/findByIngredients?ingredients={Uri.EscapeDataString(ingredientNames)}&number=5"),
+                Headers =
+                {
+                    { "x-rapidapi-key", ApiKey },
+                    { "x-rapidapi-host", "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com" },
+                },
+            };
+
+            var response = await client.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var jsonString = await response.Content.ReadAsStringAsync();
+            Logger.LogInformation($"Recipe API response: {jsonString}");
+
+            var result = System.Text.Json.JsonSerializer.Deserialize<List<Recipe>>(jsonString);
+            recipes = result ?? new List<Recipe>();
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error fetching recipes: {ex.Message}";
+            recipes.Clear();
+            StateHasChanged();
+        }
+    }
+
+    public class Recipe
+    {
+        [JsonPropertyName("title")]
+        public string Title { get; set; } = "";
+
+        [JsonPropertyName("instructions")]
+        public string Instructions { get; set; } = "";
+
+        [JsonPropertyName("usedIngredientCount")]
+        public int usedCount { get; set; }
+
+        [JsonPropertyName("missedIngredientCount")]
+        public int unusedCount { get; set; }
+
+        [JsonPropertyName("image")]
+        public string Image { get; set; } = "";
     }
 
     public class IngredientSuggestion
@@ -174,50 +269,3 @@
         debounceTimer?.Dispose();
     }
 }
-
-<style>
-    .search-container {
-        position: relative;
-        max-width: 500px;
-        margin: 20px auto;
-    }
-
-    .search-box {
-        width: 100%;
-    }
-
-    .suggestions-list {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: white;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        z-index: 1000;
-    }
-
-    .suggestion-item {
-        padding: 8px 16px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-
-    .suggestion-item:hover {
-        background-color: #f5f5f5;
-    }
-
-    .alert {
-        margin-top: 1rem;
-        padding: 0.75rem 1.25rem;
-        border: 1px solid transparent;
-        border-radius: 0.25rem;
-    }
-
-    .alert-danger {
-        color: #721c24;
-        background-color: #f8d7da;
-        border-color: #f5c6cb;
-    }
-</style> 
