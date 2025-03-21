@@ -1,0 +1,16 @@
+@page "/recipe"
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+
+<h3>Recipe.Name</h3>
+
+<button @onclick="NavigateToAnotherPage">Back</button>
+
+@code {
+    private void NavigateToAnotherPage()
+    {
+        NavigationManager.NavigateTo("");
+        Console.Write("Button clicked.");
+    }
+}
+

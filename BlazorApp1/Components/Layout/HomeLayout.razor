@@ -1,4 +1,4 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 <div class="page">
     <div class="topnavbar">
         <NavMenu />
@@ -9,12 +9,15 @@
         <article class="content px-4">
             @Body 
         </article>
+        <div class="bottom-row px-4">
+            <p class="home-description">In a pinch to cook up a marvelous meal, but not sure what to make? We’ve got you covered!</p>
+            <p class="home-description">Just type in which ingredients you have, and we'll give you the closest matching recipes!</p>
+        </div>
     <div class="mySearch">
         <SearchBar />
     </div>
-    </main>
+</main>
 </div>
-
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
