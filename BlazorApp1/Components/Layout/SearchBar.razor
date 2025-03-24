@@ -2,6 +2,7 @@
 @using System.Net.Http.Json
 @using System.Text.Json.Serialization
 @using System.Net.Http.Headers
+@using Microsoft.Extensions.Logging
 @rendermode InteractiveServer
 @inject IConfiguration Configuration
 @inject ILogger<SearchBar> Logger
@@ -35,17 +36,20 @@
 
     @if (selectedIngredients.Any())
     {
-        <div class="selected-ingredients">
-            <h5>Selected Ingredients:</h5>
-            <ul>
-                @foreach (var ingredient in selectedIngredients)
-                {
-                    <li>@ingredient.Name <button @onclick="() => RemoveIngredient(ingredient)">Remove</button></li>
-                }
-            </ul>
-            <button @onclick="FetchRecipes" class="btn btn-primary mt-2">Find Recipes</button>
-        </div>
+    <div class="selected-ingredients">
+        <h5>Selected Ingredients:</h5>
+        <ul>
+            @foreach (var ingredient in selectedIngredients)
+            {
+                <li>@ingredient.Name 
+                    <button @onclick="() => RemoveIngredient(ingredient)">Remove</button>
+                </li>
+            }
+        </ul>
+        <button @onclick="FetchRecipes" class="btn btn-primary mt-2">Find Recipes</button>
+    </div>
     }
+
 
     @if (recipes.Any())
     {
@@ -189,16 +193,40 @@
         }
     }
 
+    //
     private void SelectIngredient(IngredientSuggestion ingredient)
     {
-        if (!selectedIngredients.Any(i => i.Id == ingredient.Id))
-        {
-            selectedIngredients.Add(ingredient);
+    if(!selectedIngredients.Any()) {
+        selectedIngredients.Add(ingredient);
+        Logger.LogInformation($"Added first ingredient: {ingredient.Name}");
+    } else {
+        for(int i = 0; i < selectedIngredients.Count; i++) {
+            if (selectedIngredients[i].Name == ingredient.Name){
+                Logger.LogInformation(selectedIngredients[i].Name);
+                Logger.LogInformation($"Ingredient already selected: {ingredient.Name}");
+            } else{
+                selectedIngredients.Add(ingredient);
+                Logger.LogInformation($"Added ingredient: {ingredient.Name}");
+            }
         }
-        searchQuery = "";
-        suggestions.Clear();
-        Logger.LogInformation($"Selected ingredient: {ingredient.Name}");
     }
+        //If anything in selected ingredients is not in ingredients list add ingredients
+    @* if (!selectedIngredients.Any(i => i.Id == ingredient.Id))
+    {
+        selectedIngredients.Add(ingredient);
+        //selectedIngredients = new List<IngredientSuggestion>(selectedIngredients) { ingredient }; // Ensure state update
+        Logger.LogInformation($"Added ingredient: {ingredient.Name}");
+    }
+    else
+    {
+        Logger.LogInformation($"Ingredient already selected: {ingredient.Name}");
+    } *@
+
+    searchQuery = "";
+    suggestions.Clear();
+    StateHasChanged(); // Ensure UI updates
+    }
+
 
     private void RemoveIngredient(IngredientSuggestion ingredient)
     {
@@ -215,7 +243,7 @@
         }
 
         var ingredientNames = string.Join(",", selectedIngredients.Select(i => i.Name));
-
+        
         try
         {
             using var client = new HttpClient();
@@ -273,11 +301,11 @@
         public string Name { get; set; } = "";
 
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        public int id { get; set; }
     }
 
     public void Dispose()
     {
         debounceTimer?.Dispose();
     }
-}
+}                                                   
