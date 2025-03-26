@@ -15,6 +15,7 @@
                @onkeyup="HandleSearch"
                placeholder="Search for ingredients..."
                class="form-control" />
+               <button @onclick="FetchRecipes" class="btn btn-primary mt-2">Find Recipes</button>
     </div>
 
     @if (!string.IsNullOrEmpty(errorMessage))
@@ -46,7 +47,6 @@
                 </li>
             }
         </ul>
-        <button @onclick="FetchRecipes" class="btn btn-primary mt-2">Find Recipes</button>
     </div>
     }
 
