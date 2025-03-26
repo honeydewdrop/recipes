@@ -56,30 +56,90 @@
         <div class="recipe-list mt-4">
             <h5>Recipes Found:</h5>
             <ul>
+                <div class="grid">
                 @foreach (var recipe in recipes)
                 {
-                        <li>
-                            <h6>@recipe.Title</h6>
-                            <p>@recipe.Instructions</p>
-                            <img src="@recipe.Image" alt="@recipe.Title" style="max-width: 100%; height: auto;" />
-                        </li>
+                <div class="grid__item">
+                    <div class="card"><img class="card__img" src="@recipe.Image" alt="Snowy Mountains">
+                    <div class="card__content">
+                        <h1 class="card__header">@recipe.Title</h1>
+                    </div>
+                    </div>
+                </div>
                 }
+                </div>
             </ul>
         </div>
     }
 </div>
 
 <style>
-    styles.card = {
-    marginTop: 'calc((70px + 25vmin)/2)',
-    position: 'relative',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    width: 'calc(90vmin)',
-    borderRadius: 10,
-    marginBottom: '5vmin',
-};
+
+.grid { 
+  display: grid;
+  width: 114rem;
+  grid-gap: 6rem;
+  grid-template-columns: repeat(auto-fit, minmax(30rem, 1fr));
+  align-items: start;
+}
+.grid__item {
+  background-color: #fff;
+  border-radius: 0.4rem;
+  overflow: hidden;
+  box-shadow: 0 3rem 6rem rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: 0.2s;
+}
+.grid__item:hover {
+  transform: translateY(-0.5%);
+  box-shadow: 0 4rem 8rem rgba(0, 0, 0, 0.2);
+}
+
+.card__img {
+  display: block;
+  width: 100%;
+  height: 18rem;
+  object-fit: cover;
+}
+.card__content {
+  padding: 3rem 3rem;
+}
+.card__header {
+  font-size: 3rem;
+  font-weight: 500;
+  color: #0d0d0d;
+  margin-bottom: 1.5rem;
+}
+.card__text {
+  font-size: 1.5rem;
+  letter-spacing: 0.1rem;
+  line-height: 1.7;
+  color: #3d3d3d;
+  margin-bottom: 2.5rem;
+}
+.card__btn {
+  display: block;
+  width: 100%;
+  padding: 1.5rem;
+  font-size: 2rem;
+  text-align: center;
+  color: #3363ff;
+  background-color: #e6ecff;
+  border: none;
+  border-radius: 0.4rem;
+  transition: 0.2s;
+  cursor: pointer;
+}
+.card__btn span {
+  margin-left: 1rem;
+  transition: 0.2s;
+}
+.card__btn:hover, .card__btn:active {
+  background-color: #dce4ff;
+}
+.card__btn:hover span, .card__btn:active span {
+  margin-left: 1.5rem;
+}
 </style>
 
 @code {
@@ -192,40 +252,27 @@
             isSearching = false; // Reset the flag
         }
     }
-
-    //
+    
+    
     private void SelectIngredient(IngredientSuggestion ingredient)
     {
-    if(!selectedIngredients.Any()) {
-        selectedIngredients.Add(ingredient);
-        Logger.LogInformation($"Added first ingredient: {ingredient.Name}");
-    } else {
-        for(int i = 0; i < selectedIngredients.Count; i++) {
-            if (selectedIngredients[i].Name == ingredient.Name){
-                Logger.LogInformation(selectedIngredients[i].Name);
-                Logger.LogInformation($"Ingredient already selected: {ingredient.Name}");
-            } else{
-                selectedIngredients.Add(ingredient);
-                Logger.LogInformation($"Added ingredient: {ingredient.Name}");
-            }
+        // Check if the ingredient is already selected
+        if (!selectedIngredients.Any(i => i.Name == ingredient.Name))
+        {
+            selectedIngredients.Add(ingredient);
+            Logger.LogInformation($"Added ingredient: {ingredient.Name}");
         }
-    }
-        //If anything in selected ingredients is not in ingredients list add ingredients
-    @* if (!selectedIngredients.Any(i => i.Id == ingredient.Id))
-    {
-        selectedIngredients.Add(ingredient);
-        //selectedIngredients = new List<IngredientSuggestion>(selectedIngredients) { ingredient }; // Ensure state update
-        Logger.LogInformation($"Added ingredient: {ingredient.Name}");
-    }
-    else
-    {
-        Logger.LogInformation($"Ingredient already selected: {ingredient.Name}");
-    } *@
+        else
+        {
+            Logger.LogInformation($"Ingredient already selected: {ingredient.Name}");
+        }
 
-    searchQuery = "";
-    suggestions.Clear();
-    StateHasChanged(); // Ensure UI updates
+        // Reset search query and clear suggestions
+        searchQuery = "";
+        suggestions.Clear();
+        StateHasChanged(); // Ensure UI updates
     }
+
 
 
     private void RemoveIngredient(IngredientSuggestion ingredient)
