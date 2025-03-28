@@ -1,16 +1,130 @@
-@page "/recipe"
+@page "/recipe/{RecipeId}"
 @rendermode InteractiveServer
 @inject NavigationManager NavigationManager
+@using System.Timers
+@using System.Net.Http.Json
+@using System.Text.Json.Serialization
+@using System.Net.Http.Headers
+@using Microsoft.Extensions.Logging
+@inject IConfiguration Configuration
+@inject ILogger<ViewRecipe> Logger
 
-<h3>Recipe.Name</h3>
+
+<h3>@recipe.Title</h3>
 
 <button @onclick="NavigateToAnotherPage">Back</button>
 
+<p>@test.original</p>
+
+<p>hi</p> 
+
 @code {
+    [Parameter]
+    public string RecipeId { get; set; } = "";
+    private Recipe recipe = new();
+
+    private Ingredient test = new();
+
+    private string? errorMessage;
+    private string ApiKey => Configuration["Spoonacular:ApiKey"];
+
+    protected override async void OnInitialized()
+    {
+        Logger.LogInformation("Recipe component initialized");
+        if (string.IsNullOrEmpty(ApiKey))
+        {
+            errorMessage = "RapidAPI key is not configured";
+            Logger.LogError("RapidAPI key is missing");
+        }
+        await LoadRecipeData();
+    }
+
+    private async Task LoadRecipeData() {
+        await RecipeData();
+    }
+
+    private async Task RecipeData() {
+
+        using var client = new HttpClient();
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Get,
+            RequestUri = new Uri($"https://api.spoonacular.com/recipes/{RecipeId}/analyzedInstructions"),
+            Headers =
+            {
+                { "x-rapidapi-key", ApiKey },
+                { "x-rapidapi-host", "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com" },
+            },
+        };
+        var response = await client.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        var jsonString = await response.Content.ReadAsStringAsync();
+        Logger.LogInformation($"API response received: {jsonString}");
+    }
+
+    private async Task IngredientAmounts() {
+        using var client = new HttpClient();
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Get,
+            RequestUri = new Uri($"https://api.spoonacular.com/recipes/{RecipeId}/information"),
+            Headers =
+            {
+                {"x-rapidapi-key", ApiKey},
+                {"x-rapidapi-host", "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com"},
+            },
+        };
+        var response = await client.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        var jsonString = await response.Content.ReadAsStringAsync();
+        Logger.LogInformation($"API response received: {jsonString}");
+    }
+
     private void NavigateToAnotherPage()
     {
         NavigationManager.NavigateTo("");
         Console.Write("Button clicked.");
     }
-}
+    
+    public class Recipe
+    {
+        [JsonPropertyName("title")]
+        public string Title { get; set; } = "";
 
+        [JsonPropertyName("id")] 
+        public string id { get; set; } = "";
+
+        [JsonPropertyName("instructions")]
+        public string Instructions { get; set; } = "";
+
+        [JsonPropertyName("usedIngredientCount")]
+        public int usedCount { get; set; }
+
+        [JsonPropertyName("missedIngredientCount")]
+        public int unusedCount { get; set; }
+
+        [JsonPropertyName("image")]
+        public string Image { get; set; } = "";
+
+        [JsonPropertyName("steps")]
+        public List<Steps> step {get; set; }
+
+        [JsonPropertyName("number")]
+        public string number {get; set; } = "";
+        
+        [JsonPropertyName("extendedIngredients")]
+        public List<Ingredient> extendedIngredients {get; set; }
+    }
+    
+    public class Steps
+    {
+        [JsonPropertyName("step")]
+        public string step {get; set; } = "";
+    }
+    
+    public class Ingredient
+    {
+        [JsonPropertyName("original")]
+        public string original {get; set; } = "";
+    }
+}
