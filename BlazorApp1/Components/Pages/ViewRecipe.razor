@@ -6,6 +6,7 @@
 @using System.Text.Json.Serialization
 @using System.Net.Http.Headers
 @using Microsoft.Extensions.Logging
+@using System.Text.Json
 @inject IConfiguration Configuration
 @inject ILogger<ViewRecipe> Logger
 
@@ -16,17 +17,47 @@
 
 <p>@test.original</p>
 
-<p>hi</p> 
+@if (AnalyzedInstructions != null && AnalyzedInstructions.Count > 0)
+{
+    <ol>
+        @foreach (var step in AnalyzedInstructions)
+        {
+            <li>@step.step</li>
+        }
+    </ol>
+}
+else
+{
+    <p>No instructions found.</p>
+}
+
+@foreach (var ingredient in AnalyzedIngredients)
+{
+    <li>@ingredient.original</li>
+}
+
 
 @code {
     [Parameter]
     public string RecipeId { get; set; } = "";
+
+    public string RecipeTitle { get; set; } = "";
     private Recipe recipe = new();
 
     private Ingredient test = new();
 
+    private List<Steps> AnalyzedInstructions = new();
+
+    private List<Ingredient> AnalyzedIngredients { get; set; } = new List<Ingredient>();
+
+
     private string? errorMessage;
     private string ApiKey => Configuration["Spoonacular:ApiKey"];
+    private Timer? debounceTimer;
+    private const int DEBOUNCE_DELAY = 500; // Wait 500ms before making API call
+    private DateTime lastRequestTime = DateTime.MinValue;
+    private const int MIN_REQUEST_INTERVAL = 1000; // Minimum 1 second between requests
+    private bool isSearching = false; // To prevent overlapping requests
 
     protected override async void OnInitialized()
     {
@@ -36,48 +67,154 @@
             errorMessage = "RapidAPI key is not configured";
             Logger.LogError("RapidAPI key is missing");
         }
-        await LoadRecipeData();
+        await RecipeDataThrottle();
+        await Task.Delay(3000);
+        await RecipeIngredientThrottle();
+        Logger.LogInformation("Recipe title: ", RecipeTitle);
+        Logger.LogInformation("Recipe ID: ", RecipeId);
     }
 
-    private async Task LoadRecipeData() {
-        await RecipeData();
+        protected override void OnParametersSet()
+    {
+        // Setup debounce timer
+        debounceTimer?.Dispose();
+        debounceTimer = new Timer(DEBOUNCE_DELAY);
+        debounceTimer.Elapsed += async (sender, e) => await RecipeDataThrottle();
+        debounceTimer.Elapsed += async (sender, e) => await RecipeIngredientThrottle();
+        debounceTimer.AutoReset = false;
     }
 
-    private async Task RecipeData() {
 
-        using var client = new HttpClient();
-        var request = new HttpRequestMessage
+    private async Task RecipeDataThrottle()
+    {
+        if (isSearching) return; // Prevent overlapping requests
+        isSearching = true;
+
+        try
         {
-            Method = HttpMethod.Get,
-            RequestUri = new Uri($"https://api.spoonacular.com/recipes/{RecipeId}/analyzedInstructions"),
-            Headers =
+            // Ensure we're not making requests too frequently
+            var timeSinceLastRequest = DateTime.Now - lastRequestTime;
+            if (timeSinceLastRequest.TotalMilliseconds < MIN_REQUEST_INTERVAL)
             {
-                { "x-rapidapi-key", ApiKey },
-                { "x-rapidapi-host", "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com" },
-            },
-        };
-        var response = await client.SendAsync(request);
-        response.EnsureSuccessStatusCode();
-        var jsonString = await response.Content.ReadAsStringAsync();
-        Logger.LogInformation($"API response received: {jsonString}");
+                await Task.Delay(MIN_REQUEST_INTERVAL - (int)timeSinceLastRequest.TotalMilliseconds);
+            }
+
+            using var client = new HttpClient();
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri($"https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/recipes/{RecipeId}/analyzedInstructions"),
+                Headers =
+                {
+                    { "x-rapidapi-key", ApiKey },
+                    { "x-rapidapi-host", "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com" },
+                },
+            };
+            var response = await client.SendAsync(request);
+            lastRequestTime = DateTime.Now;
+
+            if (response.IsSuccessStatusCode)
+        {
+            var jsonString2 = await response.Content.ReadAsStringAsync();
+            
+            // Deserialize analyzedInstructions as a list of steps
+            var analyzedInstructions = System.Text.Json.JsonSerializer.Deserialize<List<Recipe>>(jsonString2);
+            
+            if (analyzedInstructions != null && analyzedInstructions.Count > 0)
+            {
+                AnalyzedInstructions = analyzedInstructions[0].steps;
+            }
+
+            StateHasChanged(); 
+        }
+        else
+        {
+            errorMessage = $"API call failed: {response.StatusCode}";
+            Logger.LogError(errorMessage);
+        }
+
+            response.EnsureSuccessStatusCode();
+            var jsonString = await response.Content.ReadAsStringAsync();
+            Logger.LogInformation($"API response received: {jsonString}");
+        }
+        catch (Exception ex)
+        {
+            await InvokeAsync(() =>
+            {
+                errorMessage = ex.Message.Contains("429")
+                    ? "Rate limit reached. Please wait a moment before trying again."
+                    : $"Error: {ex.Message}";
+                StateHasChanged();
+            });
+        }
+        finally
+        {
+            isSearching = false; // Reset the flag
+        }
     }
 
-    private async Task IngredientAmounts() {
-        using var client = new HttpClient();
-        var request = new HttpRequestMessage
+
+    private async Task RecipeIngredientThrottle()
+    {
+        if (isSearching) return; // Prevent overlapping requests
+        isSearching = true;
+
+        try
         {
-            Method = HttpMethod.Get,
-            RequestUri = new Uri($"https://api.spoonacular.com/recipes/{RecipeId}/information"),
-            Headers =
+            // Ensure we're not making requests too frequently
+            var timeSinceLastRequest = DateTime.Now - lastRequestTime;
+            if (timeSinceLastRequest.TotalMilliseconds < MIN_REQUEST_INTERVAL)
             {
-                {"x-rapidapi-key", ApiKey},
-                {"x-rapidapi-host", "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com"},
-            },
-        };
-        var response = await client.SendAsync(request);
-        response.EnsureSuccessStatusCode();
-        var jsonString = await response.Content.ReadAsStringAsync();
-        Logger.LogInformation($"API response received: {jsonString}");
+                await Task.Delay(MIN_REQUEST_INTERVAL - (int)timeSinceLastRequest.TotalMilliseconds);
+            }
+
+            using var client = new HttpClient();
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri($"https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/recipes/{RecipeId}/information"),
+                Headers =
+                {
+                    {"x-rapidapi-key", ApiKey},
+                    {"x-rapidapi-host", "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com"},
+                },
+            };
+            var response = await client.SendAsync(request);
+            lastRequestTime = DateTime.Now;
+
+            if (response.IsSuccessStatusCode)
+        {
+            var jsonString3 = await response.Content.ReadAsStringAsync();
+            
+            // Deserialize analyzedInstructions as a list of steps
+            var recipeData = JsonSerializer.Deserialize<Recipe>(jsonString3);
+            
+            if (recipeData != null && recipeData.extendedIngredients != null)
+            {
+                AnalyzedIngredients = recipeData.extendedIngredients;
+            }
+
+            StateHasChanged(); 
+        }
+
+            response.EnsureSuccessStatusCode();
+            var jsonString = await response.Content.ReadAsStringAsync();
+            Logger.LogInformation($"API response received: {jsonString}");
+        }
+        catch (Exception ex)
+        {
+            await InvokeAsync(() =>
+            {
+                errorMessage = ex.Message.Contains("429")
+                    ? "Rate limit reached. Please wait a moment before trying again."
+                    : $"Error: {ex.Message}";
+                StateHasChanged();
+            });
+        }
+        finally
+        {
+            isSearching = false; // Reset the flag
+        }
     }
 
     private void NavigateToAnotherPage()
@@ -107,7 +244,7 @@
         public string Image { get; set; } = "";
 
         [JsonPropertyName("steps")]
-        public List<Steps> step {get; set; }
+        public List<Steps> steps {get; set; }
 
         [JsonPropertyName("number")]
         public string number {get; set; } = "";
@@ -116,12 +253,22 @@
         public List<Ingredient> extendedIngredients {get; set; }
     }
     
+    public class analyzedInstructions
+    {
+        [JsonPropertyName("steps")] 
+        public List<Steps> steps { get; set; }
+    }
     public class Steps
     {
         [JsonPropertyName("step")]
         public string step {get; set; } = "";
     }
     
+    public class analyzedIngredients 
+    {
+        [JsonPropertyName("Ingredient")] 
+        public List<Ingredient> Ingredient { get; set; }
+    }
     public class Ingredient
     {
         [JsonPropertyName("original")]
