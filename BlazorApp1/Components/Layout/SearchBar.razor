@@ -1,3 +1,5 @@
+@using System.Text;
+
 @using System.Timers
 @using System.Net.Http.Json
 @using System.Text.Json.Serialization
@@ -17,6 +19,28 @@
                placeholder="Search for ingredients..."
                class="form-control" />
                <button @onclick="FetchRecipes" class="btn btn-primary mt-2">Find Recipes</button>
+    </div>
+
+
+    <div class="diet-filters"></div>
+    <h5>Diet filters:</h5>
+    <div class="diet-filter-options">
+        <label class="filter-checkbox">
+            <input type="checkbox" @bind="Vegetarian" />
+            Vegetarian
+        </label>
+        <label class="filter-checkbox">
+            <input type="checkbox" @bind="Vegan" />
+            Vegan
+        </label>
+        <label class="filter-checkbox">
+            <input type="checkbox" @bind="GlutenFree" />
+            Gluten Free
+        </label>
+        <label class="filter-checkbox">
+            <input type="checkbox" @bind="DairyFree" />
+            Dairy Free
+        </label>
     </div>
 
     @if (!string.IsNullOrEmpty(errorMessage))
@@ -146,6 +170,15 @@
 </style>
 
 @code {
+
+    //Filter variables
+    private bool Vegetarian { get; set; }
+    private bool Vegan { get; set; }
+    private bool GlutenFree { get; set; }
+    private bool DairyFree { get; set; }
+
+
+
     private string searchQuery = "";
     private List<IngredientSuggestion> suggestions = new();
     private string? errorMessage;
@@ -160,6 +193,7 @@
     public string RecipeId { get; set; } = "";
     private List<IngredientSuggestion> selectedIngredients = new();
     private List<Recipe> recipes = new();
+
 
     protected override void OnInitialized()
     {
@@ -285,48 +319,72 @@
         Logger.LogInformation($"Removed ingredient: {ingredient.Name}");
     }
 
-    private async Task FetchRecipes()
+private async Task FetchRecipes()
+{
+    if (!selectedIngredients.Any())
     {
-        if (!selectedIngredients.Any())
-        {
-            errorMessage = "Please select at least one ingredient.";
-            return;
-        }
-
-        var ingredientNames = string.Join(",", selectedIngredients.Select(i => i.Name));
-        
-        try
-        {
-            using var client = new HttpClient();
-            var request = new HttpRequestMessage
-            {
-                Method = HttpMethod.Get,
-                RequestUri = new Uri($"https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/recipes/findByIngredients?ingredients={Uri.EscapeDataString(ingredientNames)}&number=5"),
-                Headers =
-                {
-                    { "x-rapidapi-key", ApiKey },
-                    { "x-rapidapi-host", "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com" },
-                },
-            };
-
-            var response = await client.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-
-            var jsonString = await response.Content.ReadAsStringAsync();
-            Logger.LogInformation($"Recipe API response: {jsonString}");
-
-            var result = System.Text.Json.JsonSerializer.Deserialize<List<Recipe>>(jsonString);
-            recipes = result ?? new List<Recipe>();
-
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Error fetching recipes: {ex.Message}";
-            recipes.Clear();
-            StateHasChanged();
-        }
+        errorMessage = "Please select at least one ingredient.";
+        return;
     }
+
+    try
+    {
+        using var client = new HttpClient();
+        
+        //Use complexsearch to add filters instead of just by ingredients
+        var requestUri = new StringBuilder(
+            "https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/recipes/complexSearch?" +
+            $"includeIngredients={Uri.EscapeDataString(string.Join(",", selectedIngredients.Select(i => i.Name)))}" +
+            "&number=5" +
+            "&instructionsRequired=true" +
+            "&addRecipeInformation=true");
+
+        // Append the approriate filters to search
+        if (Vegetarian) requestUri.Append("&diet=vegetarian");
+        if (Vegan) requestUri.Append("&diet=vegan");
+        if (GlutenFree) requestUri.Append("&intolerances=gluten");
+        if (DairyFree) requestUri.Append("&intolerances=dairy");
+
+
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Get,
+            RequestUri = new Uri(requestUri.ToString()),
+            Headers =
+            {
+                { "x-rapidapi-key", ApiKey },
+                { "x-rapidapi-host", "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com" },
+            },
+        };
+
+        var response = await client.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var jsonString = await response.Content.ReadAsStringAsync();
+        Logger.LogInformation($"Recipe API response: {jsonString}");
+
+        var result = System.Text.Json.JsonSerializer.Deserialize<ComplexSearchResponse>(jsonString);
+        recipes = result?.Results ?? new List<Recipe>();
+
+        StateHasChanged();
+    }
+    catch (Exception ex)
+    {
+        errorMessage = $"Error fetching recipes: {ex.Message}";
+        recipes.Clear();
+        StateHasChanged();
+    }
+}
+
+// Get json response with the recipe results
+public class ComplexSearchResponse
+{
+    [JsonPropertyName("results")]
+
+    //Hold list of results from api response
+    public List<Recipe> Results { get; set; } = new();
+}
+
 
 private void NavigateToRecipe(Recipe recipe)
 {
