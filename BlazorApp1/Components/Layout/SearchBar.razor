@@ -3,6 +3,7 @@
 @using System.Text.Json.Serialization
 @using System.Net.Http.Headers
 @using Microsoft.Extensions.Logging
+@inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 @inject IConfiguration Configuration
 @inject ILogger<SearchBar> Logger
@@ -60,9 +61,11 @@
                 @foreach (var recipe in recipes)
                 {
                 <div class="grid__item">
+                    <div class="grid__item" @onclick="() => NavigateToRecipe(recipe)">
                     <div class="card"><img class="card__img" src="@recipe.Image" alt="Snowy Mountains">
                     <div class="card__content">
                         <h1 class="card__header">@recipe.Title</h1>
+                    </div>
                     </div>
                     </div>
                 </div>
@@ -153,6 +156,8 @@
     private const int MIN_REQUEST_INTERVAL = 1000; // Minimum 1 second between requests
     private bool isSearching = false; // To prevent overlapping requests
 
+[Parameter]
+    public string RecipeId { get; set; } = "";
     private List<IngredientSuggestion> selectedIngredients = new();
     private List<Recipe> recipes = new();
 
@@ -177,7 +182,6 @@
 
     private async Task HandleSearch(KeyboardEventArgs e)
     {
-        errorMessage = null;
 
         if (string.IsNullOrWhiteSpace(searchQuery) || searchQuery.Length < 2)
         {
@@ -324,10 +328,28 @@
         }
     }
 
+private void NavigateToRecipe(Recipe recipe)
+{
+    try 
+    {
+        NavigationManager.NavigateTo($"/recipe/{recipe.Id}");
+    }
+    catch (Exception ex)
+    {
+        errorMessage = $"Navigation failed: {ex.Message}";
+        Logger.LogError(ex, "Navigation error");
+        StateHasChanged();
+    }
+}
+
+
     public class Recipe
     {
         [JsonPropertyName("title")]
         public string Title { get; set; } = "";
+
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
 
         [JsonPropertyName("instructions")]
         public string Instructions { get; set; } = "";
