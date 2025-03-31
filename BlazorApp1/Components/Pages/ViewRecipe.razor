@@ -13,26 +13,14 @@
 
 <h3>@recipe.Title</h3>
 
-<button @onclick="NavigateToAnotherPage">Back</button>
-
 <img src="@recipe.Image" alt="Recipe Image">
 
-@if (AnalyzedInstructions != null && AnalyzedInstructions.Count > 0)
-{
-    <ol>
-        @foreach (var step in AnalyzedInstructions)
-        {
-            <li>@step.step</li>
-        }
-    </ol>
-}
-else
-{
-    <p>No instructions found.</p>
-}
+<button @onclick="NavigateToAnotherPage">Back</button>
+
 
 @if (AnalyzedIngredients != null && AnalyzedIngredients.Count > 0)
 {
+    <h4>Ingredients:</h4>
     <ol>
         @foreach (var ingredient in AnalyzedIngredients)
         {
@@ -43,6 +31,21 @@ else
 else 
 {
     <p>No ingredients found.</p>
+}
+
+@if (AnalyzedInstructions != null && AnalyzedInstructions.Count > 0)
+{
+    <h4>Instructions:</h4>
+    <ol>
+        @foreach (var step in AnalyzedInstructions)
+        {
+            <li>@step.step</li>
+        }
+    </ol>
+}
+else
+{
+    <p>No instructions found.</p>
 }
 
 @code {
