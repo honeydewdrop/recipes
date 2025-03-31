@@ -10,7 +10,7 @@
 @inject IConfiguration Configuration
 @inject ILogger<ViewRecipe> Logger
 
-
+<div class="body">
 <h3>@recipe.Title</h3>
 
 <img src="@recipe.Image" alt="Recipe Image">
@@ -47,6 +47,13 @@ else
 {
     <p>No instructions found.</p>
 }
+</div>
+
+<style>
+    body {
+    background: #EFEEEE;
+    }
+</style>
 
 @code {
     [Parameter]
