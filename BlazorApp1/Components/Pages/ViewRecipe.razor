@@ -31,7 +31,6 @@ else
     <p>No instructions found.</p>
 }
 
-
 @if (AnalyzedIngredients != null && AnalyzedIngredients.Count > 0)
 {
     <ol>
@@ -46,8 +45,6 @@ else
     <p>No ingredients found.</p>
 }
 
-
-
 @code {
     [Parameter]
     public string RecipeId { get; set; } = "";
@@ -56,53 +53,47 @@ else
     private Recipe recipe = new();
 
     private List<Steps> AnalyzedInstructions = new();
-
     private List<ExtendedIngredient> AnalyzedIngredients { get; set; } = new List<ExtendedIngredient>();
-
 
     private string? errorMessage;
     private string ApiKey => Configuration["Spoonacular:ApiKey"];
-    private Timer? debounceTimer;
-    private const int DEBOUNCE_DELAY = 500; // Wait 500ms before making API call
-    private DateTime lastRequestTime = DateTime.MinValue;
-    private const int MIN_REQUEST_INTERVAL = 1000; // Minimum 1 second between requests
-    private bool isSearchingInstructions = false; // To prevent overlapping requests
+    private const int DEBOUNCE_DELAY = 500;
+    private const int MIN_REQUEST_INTERVAL = 1000;
+    
+    // Added separate timestamps for each endpoint
+    private DateTime lastIngredientsRequestTime = DateTime.MinValue;
+    private DateTime lastInstructionsRequestTime = DateTime.MinValue;
+    
+    // Added semaphore to control concurrent access
+    private static readonly SemaphoreSlim apiCallSemaphore = new SemaphoreSlim(1, 1);
+    private bool isSearchingInstructions = false;
     private bool isSearchingIngredients = false;
 
-    protected override async void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Logger.LogInformation("Recipe component initialized");
         if (string.IsNullOrEmpty(ApiKey))
         {
             errorMessage = "RapidAPI key is not configured";
             Logger.LogError("RapidAPI key is missing");
+            return;
         }
-        await RecipeDataThrottle();
+        
+        // Sequential execution with proper delay
         await RecipeIngredientThrottle();
-        Logger.LogInformation("Recipe title: ", RecipeTitle);
-        Logger.LogInformation("Recipe ID: ", RecipeId);
+        await Task.Delay(1000); // Ensure minimum 1s between different endpoints
+        await RecipeDataThrottle();
     }
-
-        protected override void OnParametersSet()
-    {
-        // Setup debounce timer
-        debounceTimer?.Dispose();
-        debounceTimer = new Timer(DEBOUNCE_DELAY);
-        debounceTimer.Elapsed += async (sender, e) => await RecipeDataThrottle();
-        debounceTimer.Elapsed += async (sender, e) => await RecipeIngredientThrottle();
-        debounceTimer.AutoReset = false;
-    }
-
 
     private async Task RecipeDataThrottle()
     {
-        if (isSearchingInstructions) return; // Prevent overlapping requests
-        isSearchingInstructions = true;
-
+        await apiCallSemaphore.WaitAsync();
         try
         {
-            // Ensure we're not making requests too frequently
-            var timeSinceLastRequest = DateTime.Now - lastRequestTime;
+            if (isSearchingInstructions) return;
+            isSearchingInstructions = true;
+
+            var timeSinceLastRequest = DateTime.Now - lastInstructionsRequestTime;
             if (timeSinceLastRequest.TotalMilliseconds < MIN_REQUEST_INTERVAL)
             {
                 await Task.Delay(MIN_REQUEST_INTERVAL - (int)timeSinceLastRequest.TotalMilliseconds);
@@ -120,27 +111,25 @@ else
                 },
             };
             var response = await client.SendAsync(request);
-            lastRequestTime = DateTime.Now;
+            lastInstructionsRequestTime = DateTime.Now;
 
             if (response.IsSuccessStatusCode)
-        {
-            var jsonString2 = await response.Content.ReadAsStringAsync();
-            
-            // Deserialize analyzedInstructions as a list of steps
-            var analyzedInstructions = System.Text.Json.JsonSerializer.Deserialize<List<Recipe>>(jsonString2);
-            
-            if (analyzedInstructions != null && analyzedInstructions.Count > 0)
             {
-                AnalyzedInstructions = analyzedInstructions[0].steps;
+                var jsonString2 = await response.Content.ReadAsStringAsync();
+                var analyzedInstructions = System.Text.Json.JsonSerializer.Deserialize<List<Recipe>>(jsonString2);
+                
+                if (analyzedInstructions != null && analyzedInstructions.Count > 0)
+                {
+                    AnalyzedInstructions = analyzedInstructions[0].steps;
+                }
+                StateHasChanged(); 
             }
-
-            StateHasChanged(); 
-        }
-        else
-        {
-            errorMessage = $"API call failed: {response.StatusCode}";
-            Logger.LogError(errorMessage);
-        }
+            else
+            {
+                errorMessage = $"API call failed: {response.StatusCode}";
+                Logger.LogError(errorMessage);
+            }
+            
             var jsonString = await response.Content.ReadAsStringAsync();
             Logger.LogInformation($"API response received for instructions: {jsonString}");
         }
@@ -156,113 +145,20 @@ else
         }
         finally
         {
-            isSearchingInstructions = false; // Reset the flag
+            isSearchingInstructions = false;
+            apiCallSemaphore.Release();
         }
     }
 
     private async Task RecipeIngredientThrottle()
-{
-    if (isSearchingIngredients) return;
-    isSearchingIngredients = true;
-
-    try
     {
-        Logger.LogInformation("Starting RecipeIngredientThrottle for recipe ID: {RecipeId}", RecipeId);
-
-        // Throttle requests
-        var timeSinceLastRequest = DateTime.Now - lastRequestTime;
-        if (timeSinceLastRequest.TotalMilliseconds < MIN_REQUEST_INTERVAL)
-        {
-            var delayTime = MIN_REQUEST_INTERVAL - (int)timeSinceLastRequest.TotalMilliseconds;
-            Logger.LogInformation("Throttling request. Delaying for {delayTime}ms", delayTime);
-            await Task.Delay(delayTime);
-        }
-
-        using var client = new HttpClient();
-        var request = new HttpRequestMessage
-        {
-            Method = HttpMethod.Get,
-            RequestUri = new Uri($"https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/recipes/{RecipeId}/information"),
-            Headers =
-            {
-                {"x-rapidapi-key", ApiKey},
-                {"x-rapidapi-host", "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com"},
-            },
-        };
-
-        Logger.LogInformation("Sending request to Spoonacular API");
-        var response = await client.SendAsync(request);
-        lastRequestTime = DateTime.Now;
-
-        if (!response.IsSuccessStatusCode)
-        {
-            var errorContent = await response.Content.ReadAsStringAsync();
-            Logger.LogError("API request failed with status {StatusCode}: {ErrorContent}", 
-                response.StatusCode, errorContent);
-            errorMessage = $"API error: {response.StatusCode}";
-            return;
-        }
-
-        var jsonString = await response.Content.ReadAsStringAsync();
-        Logger.LogInformation("Received API response: {JsonString}", jsonString);
-
+        await apiCallSemaphore.WaitAsync();
         try
         {
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                AllowTrailingCommas = true
-            };
+            if (isSearchingIngredients) return;
+            isSearchingIngredients = true;
 
-            var apiRecipe = JsonSerializer.Deserialize<Recipe>(jsonString, options);
-
-            if (apiRecipe == null)
-            {
-                Logger.LogError("Deserialization returned null");
-                errorMessage = "Failed to parse recipe data";
-                return;
-            }
-
-            Logger.LogInformation("Successfully deserialized recipe: {Title}", apiRecipe.Title);
-            Logger.LogInformation("Found {Count} extended ingredients", apiRecipe.ExtendedIngredients?.Count ?? 0);
-
-            // Update the component state
-            recipe = apiRecipe;
-            AnalyzedIngredients = apiRecipe.ExtendedIngredients ?? new List<ExtendedIngredient>();
-            
-            Logger.LogInformation("Updated component state with recipe data");
-        }
-        catch (JsonException ex)
-        {
-            Logger.LogError(ex, "JSON deserialization failed");
-            errorMessage = "Failed to process recipe data";
-        }
-    }
-    catch (Exception ex)
-    {
-        Logger.LogError(ex, "Error in RecipeIngredientThrottle");
-        errorMessage = ex.Message.Contains("429") 
-            ? "Rate limit reached. Please wait before trying again." 
-            : $"Error: {ex.Message}";
-    }
-    finally
-    {
-        isSearchingIngredients = false;
-        await InvokeAsync(StateHasChanged);
-    }
-}
-
-
-    @* private async Task RecipeIngredientThrottle()
-    {
-        if (isSearchingIngredients) return; // Prevent overlapping requests
-        isSearchingIngredients = true;
-
-        try
-        {
-            Logger.LogInformation($"Beginning of RecipeIngredientThrottle.");
-            // Ensure we're not making requests too frequently
-            var timeSinceLastRequest = DateTime.Now - lastRequestTime;
+            var timeSinceLastRequest = DateTime.Now - lastIngredientsRequestTime;
             if (timeSinceLastRequest.TotalMilliseconds < MIN_REQUEST_INTERVAL)
             {
                 await Task.Delay(MIN_REQUEST_INTERVAL - (int)timeSinceLastRequest.TotalMilliseconds);
@@ -279,53 +175,62 @@ else
                     {"x-rapidapi-host", "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com"},
                 },
             };
-            var response = await client.SendAsync(request);
-            lastRequestTime = DateTime.Now;
 
-        if (response.IsSuccessStatusCode)
+            var response = await client.SendAsync(request);
+            lastIngredientsRequestTime = DateTime.Now;
+
+            if (!response.IsSuccessStatusCode)
             {
-                var jsonString3 = await response.Content.ReadAsStringAsync();
-                Logger.LogInformation($"API response for ingredients: {jsonString3}");
-                
-                var recipe = JsonSerializer.Deserialize<Recipe>(jsonString3);
-                
-                if(recipe.Title != null) {
-                    Logger.LogInformation("Checking to see if recipe empty: ", recipe.Title);
-                    }
-                else 
-                {
-                    Logger.LogInformation("Recipe empty.");
-                    }
-                
-                if (recipe != null)
-                {
-                    Logger.LogInformation("We are inside the if");
-                    Logger.LogInformation($"ExtendedIngredients count: {recipe.ExtendedIngredients?.Count}");
-                    AnalyzedIngredients = recipe.ExtendedIngredients ?? new();
-                }
-                
-                await InvokeAsync(StateHasChanged);
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Logger.LogError("API request failed with status {StatusCode}: {ErrorContent}", 
+                    response.StatusCode, errorContent);
+                errorMessage = $"API error: {response.StatusCode}";
+                return;
             }
 
-            response.EnsureSuccessStatusCode();
             var jsonString = await response.Content.ReadAsStringAsync();
-            Logger.LogInformation($"API response received for ingredients: {jsonString}");
+            Logger.LogInformation("Received API response: {JsonString}", jsonString);
+
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    AllowTrailingCommas = true
+                };
+
+                var apiRecipe = JsonSerializer.Deserialize<Recipe>(jsonString, options);
+
+                if (apiRecipe == null)
+                {
+                    Logger.LogError("Deserialization returned null");
+                    errorMessage = "Failed to parse recipe data";
+                    return;
+                }
+
+                recipe = apiRecipe;
+                AnalyzedIngredients = apiRecipe.ExtendedIngredients ?? new List<ExtendedIngredient>();
+            }
+            catch (JsonException ex)
+            {
+                Logger.LogError(ex, "JSON deserialization failed");
+                errorMessage = "Failed to process recipe data";
+            }
         }
         catch (Exception ex)
         {
-            await InvokeAsync(() =>
-            {
-                errorMessage = ex.Message.Contains("429")
-                    ? "Rate limit reached. Please wait a moment before trying again."
-                    : $"Error: {ex.Message}";
-                StateHasChanged();
-            });
+            Logger.LogError(ex, "Error in RecipeIngredientThrottle");
+            errorMessage = ex.Message.Contains("429") 
+                ? "Rate limit reached. Please wait before trying again." 
+                : $"Error: {ex.Message}";
         }
         finally
         {
-            isSearchingIngredients = false; // Reset the flag
+            isSearchingIngredients = false;
+            apiCallSemaphore.Release();
+            await InvokeAsync(StateHasChanged);
         }
-    } *@
+    }
 
     private void NavigateToAnotherPage()
     {
@@ -333,55 +238,57 @@ else
         Console.Write("Button clicked.");
     }
     
-public class Recipe
-{
-    [JsonPropertyName("id")]
-    public int Id { get; set; }
+    public class Recipe
+    {
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
 
-    [JsonPropertyName("title")]
-    public string Title { get; set; } = "";
+        [JsonPropertyName("title")]
+        public string Title { get; set; } = "";
 
-    [JsonPropertyName("extendedIngredients")]
-    public List<ExtendedIngredient> ExtendedIngredients { get; set; } = new List<ExtendedIngredient>();
+        [JsonPropertyName("extendedIngredients")]
+        public List<ExtendedIngredient> ExtendedIngredients { get; set; } = new List<ExtendedIngredient>();
 
-    [JsonPropertyName("image")]
-    public string Image { get; set; } = "";
+        [JsonPropertyName("image")]
+        public string Image { get; set; } = "";
 
-    [JsonPropertyName("instructions")]
-    public string Instructions { get; set; } = "";
+        [JsonPropertyName("instructions")]
+        public string Instructions { get; set; } = "";
 
-    [JsonPropertyName("steps")]
-    public List<Steps> steps { get; set; } = new List<Steps>();
-}
+        [JsonPropertyName("steps")]
+        public List<Steps> steps { get; set; } = new List<Steps>();
+    }
 
     public class ExtendedIngredient
-{
-    [JsonPropertyName("id")]
-    public int Id { get; set; }
+    {
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
 
-    [JsonPropertyName("name")]
-    public string Name { get; set; } = "";
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = "";
 
-    [JsonPropertyName("original")]
-    public string Original { get; set; } = "";
+        [JsonPropertyName("original")]
+        public string Original { get; set; } = "";
 
-    [JsonPropertyName("amount")]
-    public decimal Amount { get; set; }
+        [JsonPropertyName("amount")]
+        public decimal Amount { get; set; }
 
-    [JsonPropertyName("unit")]
-    public string Unit { get; set; } = "";
-}
+        [JsonPropertyName("unit")]
+        public string Unit { get; set; } = "";
+    }
     
     public class analyzedIngredients
     {
         [JsonPropertyName("extendedIngredients")]
         public List<ExtendedIngredient> ExtendedIngredients {get; set; }
     }
+    
     public class analyzedInstructions
     {
         [JsonPropertyName("steps")] 
         public List<Steps> steps { get; set; }
     }
+    
     public class Steps
     {
         [JsonPropertyName("step")]
