@@ -226,3 +226,10 @@ body {
 	grid-area: results;
 	background: hsl(0, 0%, 95%);
 }
+
+.diet-filter-options, .allergy-filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+

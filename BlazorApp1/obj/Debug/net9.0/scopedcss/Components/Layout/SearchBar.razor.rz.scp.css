@@ -226,3 +226,10 @@ body[b-8i7f8iqa4a] {
 	grid-area: results;
 	background: hsl(0, 0%, 95%);
 }
+
+.diet-filter-options[b-8i7f8iqa4a], .allergy-filter-options[b-8i7f8iqa4a] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
