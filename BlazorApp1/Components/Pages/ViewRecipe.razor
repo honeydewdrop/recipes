@@ -11,11 +11,11 @@
 @inject ILogger<ViewRecipe> Logger
 
 <div class="body">
-<h3>@recipe.Title</h3>
+<h3> @recipe.Title</h3>
 
-<img src="@recipe.Image" alt="Recipe Image">
-
-<button @onclick="NavigateToAnotherPage">Back</button>
+<img src="@recipe.Image" style="transform: translateX(60vh)" alt="Recipe Image">
+@* 
+<button @onclick="NavigateToAnotherPage">Back</button> *@
 
 
 @if (AnalyzedIngredients != null && AnalyzedIngredients.Count > 0)
@@ -24,13 +24,13 @@
     <ol>
         @foreach (var ingredient in AnalyzedIngredients)
         {
-            <li>@ingredient.Original</li>
+            <li style="font-size: 2vh">@ingredient.Original</li>
         }
     </ol>
 }
 else 
 {
-    <p>No ingredients found.</p>
+    <p>Loading recipes...</p>
 }
 
 @if (AnalyzedInstructions != null && AnalyzedInstructions.Count > 0)
@@ -39,19 +39,19 @@ else
     <ol>
         @foreach (var step in AnalyzedInstructions)
         {
-            <li>@step.step</li>
+            <li style="font-size: 2vh">@step.step</li>
         }
     </ol>
 }
 else
 {
-    <p>No instructions found.</p>
+    <p>Loading instructions...</p>
 }
 </div>
 
 <style>
     body {
-    background: #EFEEEE;
+    background: #FFFFFF;
     }
 </style>
 

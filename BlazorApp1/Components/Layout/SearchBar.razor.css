@@ -4,31 +4,20 @@
 
 html, body {
 	min-height: 100vh;
-}
-
-body {
-	display: grid;
-	grid-template:
-		"search" minmax(300px, 50vh)
-		"results" minmax(20%, auto)
-		/ 1fr;
-	margin: 0;
-	font: 24px/1.5 system-ui, sans-serif;
+	max-width: 50vh;
 }
 
 
 
-#search {
+.search {
 	display: grid;
 	grid-area: search;
 	grid-template:
-		"search" 60px
-		/ 420px;
+		"search" 4vh
+		/ 60vh;
 	justify-content: center;
 	align-content: center;
-	justify-items: stretch;
-	align-items: stretch;
-	background: #EFEEEE;
+	background: #FFFFFF;
 }
 
 #search input {
@@ -36,10 +25,9 @@ body {
 	grid-area: search;
 	-webkit-appearance: none;
 	appearance: none;
-	width: 100%;
+	width: 50%;
 	height: 100%;
 	background: none;
-	padding: 0 30px 0 60px;
 	border: none;
 	border-radius: 100px;
 	font: 24px/1 system-ui, sans-serif;

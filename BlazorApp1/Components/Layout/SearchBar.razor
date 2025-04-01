@@ -10,8 +10,8 @@
 @inject IConfiguration Configuration
 @inject ILogger<SearchBar> Logger
 
-<div class="search-container">
-    <div class="search-box">
+
+    <div class="search">
         <input type="text"
                @bind="searchQuery"
                @bind:event="oninput"
@@ -22,7 +22,7 @@
     </div>
 
 
-    <div class="diet-filters"></div>
+    <div class="diet-filters" style="transform: translateY(-5vh); width: 50vh">
     <h5>Diet filters:</h5>
     <div class="diet-filter-options">
         <label class="filter-checkbox">
@@ -51,7 +51,7 @@
         </label>
     </div>
 
-        <div class="allergy-filters"></div>
+    <div class="allergy-filters" style="transform: translateY(-12vh);">
     <h5>Allergies:</h5>
     <div class="allergy-filter-options">
         <label class="filter-checkbox">
@@ -79,15 +79,16 @@
             Sesame
         </label>
     </div>
+    </div>
 
     @if (!string.IsNullOrEmpty(errorMessage))
     {
-        <div class="alert alert-danger mt-2">@errorMessage</div>
+        <div class="alert alert-danger mt-2" style="transform: translateX(67vh)">@errorMessage</div>
     }
 
     @if (suggestions.Any())
     {
-        <div class="suggestions-list">
+        <div class="suggestions-list" style="transform: translateX(80vh); margin-bottom: 1vh;">
             @foreach (var suggestion in suggestions)
             {
                 <div class="suggestion-item" @onclick="() => SelectIngredient(suggestion)">
@@ -96,7 +97,6 @@
             }
         </div>
     }
-
     @if (selectedIngredients.Any())
     {
     <div class="selected-ingredients">
@@ -113,13 +113,13 @@
     }
 
 
-    @if (recipes.Any())
+    @if (allRecipes.Any())
     {
         <div class="recipe-list mt-4">
             <h5>Recipes Found:</h5>
             <ul>
                 <div class="grid">
-                @foreach (var recipe in recipes)
+                @foreach (var recipe in displayedRecipes)
                 {
                 <div class="grid__item">
                     <div class="grid__item" @onclick="() => NavigateToRecipe(recipe)">
@@ -134,25 +134,58 @@
                 </div>
             </ul>
         </div>
+    } else if (!allRecipes.Any() && searchRan == true) {
+        <ul style="text-align: center; transform: translateX(65vh); font-size: 1.5em">No recipes matching query found. Hint: Did you check a filter with a contradicting ingredient?</ul>
+        <ul style="text-align: center; transform: translateX(65vh); font-size: 1.5em">Or maybe there just aren't any... :(</ul>
     }
-</div>
+    @if (allRecipes.Count > displayedRecipes.Count)
+    {
+        <button class="view-more-btn" @onclick="LoadMore">
+            View More Recipes
+        </button>
+    }
+    </div>
 
 <style>
 
-.grid { 
+.grid {
   display: grid;
-  width: 114rem;
-  grid-gap: 6rem;
-  grid-template-columns: repeat(auto-fit, minmax(30rem, 1fr));
+  width: 100%; 
+  grid-gap: 2rem;
+  grid-template-columns: repeat(4, minmax(40vh, 1fr)); /* Strict 4 columns */
   align-items: start;
+  padding: 0 2rem; 
+  box-sizing: border-box; 
 }
+
 .grid__item {
   background-color: #fff;
   border-radius: 0.4rem;
+  width: 100%; 
+  height: 100%;
   overflow: hidden;
   box-shadow: 0 3rem 6rem rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: 0.2s;
+}
+
+/* Responsive adjustments */
+@@media (max-width: 1200px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)); /* 3 columns on medium screens */
+  }
+}
+
+@@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)); /* 2 columns on tablets */
+  }
+}
+
+@@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: 1fr; /* 1 column on mobile */
+  }
 }
 .grid__item:hover {
   transform: translateY(-0.5%);
@@ -161,7 +194,7 @@
 
 .card__img {
   display: block;
-  width: 100%];
+  width: 100%;
   height: 18rem;
   object-fit: cover;
 }
@@ -169,7 +202,7 @@
   padding: 3rem 3rem;
 }
 .card__header {
-  font-size: 3rem;
+  font-size: 1.5rem;
   font-weight: 500;
   color: #0d0d0d;
   margin-bottom: 1.5rem;
@@ -179,7 +212,6 @@
   letter-spacing: 0.1rem;
   line-height: 1.7;
   color: #3d3d3d;
-  margin-bottom: 2.5rem;
 }
 .card__btn {
   display: block;
@@ -203,6 +235,10 @@
 }
 .card__btn:hover span, .card__btn:active span {
   margin-left: 1.5rem;
+}
+
+.suggestions-list {
+    align-content: center;
 }
 </style>
 
@@ -236,10 +272,16 @@
     private const int MIN_REQUEST_INTERVAL = 1000; // Minimum 1 second between requests
     private bool isSearching = false; // To prevent overlapping requests
 
+    private bool searchRan = false; // so we don't display the no matching recipes message before searching
+
 [Parameter]
     public string RecipeId { get; set; } = "";
     private List<IngredientSuggestion> selectedIngredients = new();
-    private List<Recipe> recipes = new();
+    private List<Recipe> recipes = new(); // Currently shown recipes
+
+    private List<Recipe> allRecipes = new List<Recipe>(); // All fetched recipes
+    private List<Recipe> displayedRecipes = new List<Recipe>();
+    private int visibleCount = 8; // amoutn to display immediately with query
 
 
     protected override void OnInitialized()
@@ -364,6 +406,7 @@
     {
         selectedIngredients.Remove(ingredient);
         Logger.LogInformation($"Removed ingredient: {ingredient.Name}");
+
     }
 
 private async Task FetchRecipes()
@@ -371,6 +414,7 @@ private async Task FetchRecipes()
     if (!selectedIngredients.Any())
     {
         errorMessage = "Please select at least one ingredient.";
+        recipes.Clear();
         return;
     }
 
@@ -382,7 +426,7 @@ private async Task FetchRecipes()
         var requestUri = new StringBuilder(
             "https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/recipes/complexSearch?" +
             $"includeIngredients={Uri.EscapeDataString(string.Join(",", selectedIngredients.Select(i => i.Name)))}" +
-            "&number=5" +
+            "&number=100" +
             "&instructionsRequired=true" +
             "&addRecipeInformation=true");
 
@@ -419,10 +463,12 @@ private async Task FetchRecipes()
         var jsonString = await response.Content.ReadAsStringAsync();
         Logger.LogInformation($"Recipe API response: {jsonString}");
 
-        var result = System.Text.Json.JsonSerializer.Deserialize<ComplexSearchResponse>(jsonString);
-        recipes = result?.Results ?? new List<Recipe>();
-
+        var newRecipes = System.Text.Json.JsonSerializer.Deserialize<ComplexSearchResponse>(jsonString);
+        allRecipes.AddRange(newRecipes.Results);
+        errorMessage = "";
+        UpdateDisplayedRecipes();
         StateHasChanged();
+        searchRan = true;
     }
     catch (Exception ex)
     {
@@ -432,7 +478,17 @@ private async Task FetchRecipes()
     }
 }
 
-// Get json response with the recipe results
+    private void UpdateDisplayedRecipes()
+    {
+        displayedRecipes = allRecipes.Take(visibleCount).ToList();
+    }
+
+    private void LoadMore()
+    {
+        visibleCount += 8; // Load 8 more (adjust as needed)
+        UpdateDisplayedRecipes();
+    }
+
 public class ComplexSearchResponse
 {
     [JsonPropertyName("results")]
