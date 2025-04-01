@@ -58,8 +58,6 @@ html[b-8i7f8iqa4a], body[b-8i7f8iqa4a] {
 	max-width: 50vh;
 }
 
-
-
 .search[b-8i7f8iqa4a] {
 	display: grid;
 	grid-area: search;
@@ -69,6 +67,7 @@ html[b-8i7f8iqa4a], body[b-8i7f8iqa4a] {
 	justify-content: center;
 	align-content: center;
 	background: #FFFFFF;
+	border: black;
 }
 
 #search input[b-8i7f8iqa4a] {

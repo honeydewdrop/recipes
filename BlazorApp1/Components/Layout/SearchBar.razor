@@ -88,13 +88,15 @@
 
     @if (suggestions.Any())
     {
-        <div class="suggestions-list" style="transform: translateX(80vh); margin-bottom: 1vh;">
-            @foreach (var suggestion in suggestions)
-            {
-                <div class="suggestion-item" @onclick="() => SelectIngredient(suggestion)">
-                    @suggestion.Name
-                </div>
-            }
+        <div class="suggestions-container">
+            <div class="suggestions-list">
+                @foreach (var suggestion in suggestions)
+                {
+                    <div class="suggestion-item" style="border-radius: 0.2vh" @onclick="() => SelectIngredient(suggestion)">
+                        @suggestion.Name
+                    </div>
+                }
+            </div>
         </div>
     }
     @if (selectedIngredients.Any())
@@ -237,8 +239,8 @@
   margin-left: 1.5rem;
 }
 
-.suggestions-list {
-    align-content: center;
+.suggestions-container {
+    transform: translate(80vh,-5vh);
 }
 </style>
 
@@ -485,8 +487,8 @@ private async Task FetchRecipes()
 
     private void LoadMore()
     {
-        visibleCount += 8; // Load 8 more (adjust as needed)
-        UpdateDisplayedRecipes();
+        visibleCount += 8; // Load 8 more per button click
+        UpdateDisplayedRecipes(); // update the amt of displayed recipes
     }
 
 public class ComplexSearchResponse
