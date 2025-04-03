@@ -7,51 +7,99 @@ html, body {
 	max-width: 50vh;
 }
 
-.search {
-	display: grid;
-	grid-area: search;
-	grid-template:
-		"search" 4vh
-		/ 60vh;
-	justify-content: center;
-	align-content: center;
-	background: #FFFFFF;
-	border: black;
+.search-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1rem;
 }
 
-#search input {
-	display: block;
-	grid-area: search;
-	-webkit-appearance: none;
-	appearance: none;
-	width: 50%;
-	height: 100%;
-	background: none;
-	border: none;
-	border-radius: 100px;
-	font: 24px/1 system-ui, sans-serif;
-	outline-offset: -8px;
+.search-box {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
 }
 
-
-#search svg {
-	grid-area: search;
-	overflow: visible;
-	color: #0A2463;
-	fill: none;
-	stroke: currentColor;
+.search-input-wrapper {
+    position: relative;
+    flex: 1;
+    min-height: 50px;
 }
 
-.spark {
-	fill: currentColor;
-	stroke: none;
-	r: 15;
+.ingredient-tags-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0 1rem;
+    pointer-events: none;
+    overflow: hidden;
 }
 
-.spark:nth-child(1) {
-	animation:
-		spark-radius 2.03s 1s both,
-		spark-one-motion 2s 1s both;
+.search-input {
+    width: 100%;
+    height: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: transparent;
+    position: relative;
+    z-index: 1;
+	transform: translateY(1vh);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #1a73e8;
+    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+.ingredient-tag {
+    align-items: center;
+    padding: 0.35rem 0.75rem;
+    background-color: #e9f5ff;
+    border-radius: 2vh;
+    font-size: 0.9rem;
+    color: #1a73e8;
+    pointer-events: auto;
+    z-index: 2;
+	transform: translate(53vh, -15.5vh);
+}
+
+.remove-tag {
+    margin-left: 0.5rem;
+    background: none;
+    border: none;
+    color: #5f6368;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0 0.25rem;
+}
+
+.remove-tag:hover {
+    color: #d93025;
+}
+
+.search-button {
+    padding: 0.75rem 1.5rem;
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.search-button:hover {
+    background-color: #0d62c9;
 }
 
 @keyframes spark-radius {
