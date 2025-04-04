@@ -126,8 +126,14 @@
                     <div class="grid__item" @onclick="() => NavigateToRecipe(recipe)">
                     <div class="card"><img class="card__img" src="@recipe.Image" alt="Snowy Mountains">
                     <div class="card__content">
-                        <h1 class="card__header">@recipe.Title</h1>
-                    </div>
+    <h1 class="card__header">@recipe.Title</h1>
+    @if (recipe.TotalIngredients > 0)
+    {
+        <p class="card__text">
+            @selectedIngredients.Count out of @recipe.TotalIngredients total ingredients
+        </p>
+    }
+</div>
                     </div>
                     </div>
                 </div>
@@ -250,6 +256,9 @@
     private bool isSearching = false; // To prevent overlapping requests
 
     private bool searchRan = false; // so we don't display the no matching recipes message before searching
+    private DateTime lastApiCallTime = DateTime.MinValue;
+private readonly SemaphoreSlim apiCallSemaphore = new SemaphoreSlim(1, 1);
+private const int MIN_REQUEST_INTERVAL_MS = 1000; // 1 second between requests
 
 [Parameter]
     public string RecipeId { get; set; } = "";
@@ -408,7 +417,7 @@ private async Task HandleKeyUp(KeyboardEventArgs e)
 
 private async Task FetchRecipes()
 {
-    if (!selectedIngredients.Any())
+   if (!selectedIngredients.Any())
     {
         errorMessage = "Please select at least one ingredient.";
         allRecipes.Clear();
@@ -419,7 +428,7 @@ private async Task FetchRecipes()
     {
         using var client = new HttpClient();
         
-        //Use complexsearch to add filters instead of just by ingredients
+        // Initial search to get recipe IDs
         var requestUri = new StringBuilder(
             "https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/recipes/complexSearch?" +
             $"includeIngredients={Uri.EscapeDataString(string.Join(",", selectedIngredients.Select(i => i.Name)))}" +
@@ -442,7 +451,7 @@ private async Task FetchRecipes()
         
 
 
-        var request = new HttpRequestMessage
+                var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
             RequestUri = new Uri(requestUri.ToString()),
@@ -457,11 +466,24 @@ private async Task FetchRecipes()
         response.EnsureSuccessStatusCode();
 
         var jsonString = await response.Content.ReadAsStringAsync();
-        Logger.LogInformation($"Recipe API response: {jsonString}");
+        var searchResults = System.Text.Json.JsonSerializer.Deserialize<ComplexSearchResponse>(jsonString);
 
-        var newRecipes = System.Text.Json.JsonSerializer.Deserialize<ComplexSearchResponse>(jsonString);
+        // Clear previous results
         allRecipes.Clear();
-        allRecipes.AddRange(newRecipes.Results);
+
+        // Get detailed information for each recipe
+    var recipeIds = searchResults.Results.Select(r => r.Id).ToList();
+    
+    // Get detailed information in bulk
+    var detailedRecipes = await GetBulkRecipeInformation(recipeIds);
+    
+    // Process each recipe
+    foreach (var recipe in detailedRecipes)
+    {
+        recipe.UsedIngredientCount = CountMatchingIngredients(recipe);
+        allRecipes.Add(recipe);
+    }
+
         errorMessage = "";
         UpdateDisplayedRecipes();
         StateHasChanged();
@@ -470,9 +492,75 @@ private async Task FetchRecipes()
     catch (Exception ex)
     {
         errorMessage = $"Error fetching recipes: {ex.Message}";
-        recipes.Clear();
+        allRecipes.Clear();
         StateHasChanged();
     }
+}
+
+private async Task<List<Recipe>> GetBulkRecipeInformation(List<int> recipeIds)
+{
+    await apiCallSemaphore.WaitAsync();
+    try
+    {
+        var timeSinceLastCall = DateTime.Now - lastApiCallTime;
+        if (timeSinceLastCall.TotalMilliseconds < MIN_REQUEST_INTERVAL_MS)
+        {
+            var delayTime = (int)(MIN_REQUEST_INTERVAL_MS - timeSinceLastCall.TotalMilliseconds);
+            await Task.Delay(delayTime);
+        }
+
+        using var client = new HttpClient();
+        var idsParam = string.Join(",", recipeIds);
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Get,
+            RequestUri = new Uri($"https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/recipes/informationBulk?ids={idsParam}"),
+            Headers =
+            {
+                { "x-rapidapi-key", ApiKey },
+                { "x-rapidapi-host", "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com" },
+            },
+        };
+
+        lastApiCallTime = DateTime.Now;
+        var response = await client.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var jsonString = await response.Content.ReadAsStringAsync();
+        return System.Text.Json.JsonSerializer.Deserialize<List<Recipe>>(jsonString) ?? new List<Recipe>();
+    }
+    catch (HttpRequestException httpEx) when (httpEx.Message.Contains("429"))
+    {
+        await Task.Delay(5000);
+        return await GetBulkRecipeInformation(recipeIds);
+    }
+    catch
+    {
+        return new List<Recipe>();
+    }
+    finally
+    {
+        apiCallSemaphore.Release();
+    }
+}
+
+private int CountMatchingIngredients(Recipe recipe)
+{
+    if (recipe.ExtendedIngredients == null || !recipe.ExtendedIngredients.Any())
+        return 0;
+
+    var count = 0;
+    foreach (var selectedIngredient in selectedIngredients)
+    {
+        // Check both the standardized name and original string
+        if (recipe.ExtendedIngredients.Any(ri => 
+            ri.Name.Contains(selectedIngredient.Name, StringComparison.OrdinalIgnoreCase) ||
+            ri.Original.Contains(selectedIngredient.Name, StringComparison.OrdinalIgnoreCase)))
+        {
+            count++;
+        }
+    }
+    return count;
 }
 
     private void UpdateDisplayedRecipes()
@@ -521,11 +609,11 @@ private void NavigateToRecipe(Recipe recipe)
         [JsonPropertyName("instructions")]
         public string Instructions { get; set; } = "";
 
-        [JsonPropertyName("usedIngredientCount")]
-        public int usedCount { get; set; }
+    [JsonPropertyName("extendedIngredients")]
+    public List<RecipeIngredient>? ExtendedIngredients { get; set; }
 
-        [JsonPropertyName("missedIngredientCount")]
-        public int unusedCount { get; set; }
+    public int UsedIngredientCount { get; set; }
+    public int TotalIngredients => ExtendedIngredients?.Count ?? 0;
 
         [JsonPropertyName("image")]
         public string Image { get; set; } = "";
@@ -539,6 +627,15 @@ private void NavigateToRecipe(Recipe recipe)
         [JsonPropertyName("id")]
         public int id { get; set; }
     }
+
+public class RecipeIngredient
+{
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = "";
+    
+    [JsonPropertyName("original")]
+    public string Original { get; set; } = "";
+}
 
     public void Dispose()
     {
