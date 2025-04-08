@@ -124,13 +124,13 @@
                 {
                 <div class="grid__item">
                     <div class="grid__item" @onclick="() => NavigateToRecipe(recipe)">
-                    <div class="card"><img class="card__img" src="@recipe.Image" alt="Snowy Mountains">
+                    <div class="card"><img class="card__img" src="@recipe.Image" alt="Recipe Image">
                     <div class="card__content">
     <h1 class="card__header">@recipe.Title</h1>
     @if (recipe.TotalIngredients > 0)
     {
         <p class="card__text">
-            @selectedIngredients.Count out of @recipe.TotalIngredients total ingredients
+            You have @selectedIngredients.Count/@recipe.TotalIngredients total ingredients!
         </p>
     }
 </div>
@@ -552,7 +552,7 @@ private int CountMatchingIngredients(Recipe recipe)
     var count = 0;
     foreach (var selectedIngredient in selectedIngredients)
     {
-        // Check both the standardized name and original string
+        // Check both the name and original string
         if (recipe.ExtendedIngredients.Any(ri => 
             ri.Name.Contains(selectedIngredient.Name, StringComparison.OrdinalIgnoreCase) ||
             ri.Original.Contains(selectedIngredient.Name, StringComparison.OrdinalIgnoreCase)))
@@ -563,10 +563,15 @@ private int CountMatchingIngredients(Recipe recipe)
     return count;
 }
 
-    private void UpdateDisplayedRecipes()
-    {
-        displayedRecipes = allRecipes.Take(visibleCount).ToList();
-    }
+private void UpdateDisplayedRecipes()
+{
+    displayedRecipes = allRecipes
+        .Where(r => r.TotalIngredients > 0)
+        .OrderBy(r => Math.Abs(1 - (double)selectedIngredients.Count / r.TotalIngredients))
+        .Take(visibleCount)
+        .ToList();
+}
+
 
     private void LoadMore()
     {
