@@ -354,11 +354,10 @@ html, body {
 }
 
 .taste-bar {
-    height: 8px;
-    background-color: #f0f0f0;
-    border-radius: 4px;
-    position: relative;
-    overflow: hidden;
+    background: linear-gradient(to right, #4CAF50 var(--value), #e0e0e0 var(--value));
+    height: 10px;
+    border-radius: 5px;
+    width: 100px;
 }
 
 .taste-bar::after {
