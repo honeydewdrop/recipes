@@ -1,4 +1,4 @@
-@page "/recipe/{RecipeId}"
+@page "/recipe/{RecipeId}" 
 @rendermode InteractiveServer
 @inject NavigationManager NavigationManager
 @using System.Timers
@@ -18,56 +18,56 @@
 <button @onclick="NavigateToAnotherPage">Back</button> *@
 
 
-@if (AnalyzedIngredients != null && AnalyzedIngredients.Count > 0)
+@if (AnalyzedIngredients != null && AnalyzedIngredients.Count > 0) @*if there are ingredients to display *@
 {
-    <h4>Ingredients:</h4>
+    <h4>Ingredients:</h4> @* header to precede ingredients *@
     <ol>
-        @foreach (var ingredient in AnalyzedIngredients)
+        @foreach (var ingredient in AnalyzedIngredients) @*C# feature: foreach loop - exclusively used to loop through elements in a data set*@
         {
-            <li style="font-size: 2vh">@ingredient.Original</li>
+            <li style="font-size: 2vh">@ingredient.Original</li> @*print out the Original trait of ingredient object*@
         }
     </ol>
 }
 else 
 {
-    <p>Loading recipes...</p>
+    <p>Loading recipes...</p> @*place holder while the api makes a call so a user doesn't immediately leave*@
 }
 
-@if (AnalyzedInstructions != null && AnalyzedInstructions.Count > 0)
+@if (AnalyzedInstructions != null && AnalyzedInstructions.Count > 0) @*same as above*@
 {
     <h4>Instructions:</h4>
     <ol>
-        @foreach (var step in AnalyzedInstructions)
+        @foreach (var step in AnalyzedInstructions) @*looping through step elements in analyzed instructions*@
         {
-            <li style="font-size: 2vh">@step.step</li>
+            <li style="font-size: 2vh">@step.step</li> @*now print step trait of object step*@
         }
     </ol>
 }
 else
 {
-    <p>Loading instructions...</p>
+    <p>Loading instructions...</p> @*place holder*@
 }
 </div>
 
 <style>
     body {
-    background: #FFFFFF;
+    background: #FFFFFF; @*white background to fit*@
     }
 </style>
 
-@code {
+@code { @*full C# code begins*@
     [Parameter]
-    public string RecipeId { get; set; } = "";
+    public string RecipeId { get; set; } = ""; 
 
     public string RecipeTitle { get; set; } = "";
-    private Recipe recipe = new();
+    private Recipe recipe = new(); @*new Recipe instance called recipe*@
 
-    private List<Steps> AnalyzedInstructions = new();
-    private List<ExtendedIngredient> AnalyzedIngredients { get; set; } = new List<ExtendedIngredient>();
+    private List<Steps> AnalyzedInstructions = new(); @*new List of steps instance called analyzed instructions *@
+    private List<ExtendedIngredient> AnalyzedIngredients { get; set; } = new List<ExtendedIngredient>(); @*new instance of a list of extended ingredients called analyzed ingredients*@
 
     private string? errorMessage;
-    private string ApiKey => Configuration["Spoonacular:ApiKey"];
-    private const int DEBOUNCE_DELAY = 500;
+    private string ApiKey => Configuration["Spoonacular:ApiKey"]; @* string of my api key saved in another file so i can keep it private and also not type it a lot*@
+    private const int DEBOUNCE_DELAY = 500; 
     private const int MIN_REQUEST_INTERVAL = 1000;
     
     // Added separate timestamps for each endpoint
@@ -81,18 +81,18 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        Logger.LogInformation("Recipe component initialized");
+        Logger.LogInformation("Recipe component initialized"); @*checking to see if recipe component starts up as an error check*@
         if (string.IsNullOrEmpty(ApiKey))
         {
-            errorMessage = "RapidAPI key is not configured";
+            errorMessage = "RapidAPI key is not configured"; @*checking if theres an error with our api connection*@
             Logger.LogError("RapidAPI key is missing");
             return;
         }
         
         // Sequential execution with proper delay
-        await RecipeIngredientThrottle();
+        await RecipeIngredientThrottle(); // calling this function
         await Task.Delay(1000); // Ensure minimum 1s between different endpoints
-        await RecipeDataThrottle();
+        await RecipeDataThrottle(); // now calling this function
     }
 
     private async Task RecipeDataThrottle()
@@ -112,27 +112,27 @@ else
             using var client = new HttpClient();
             var request = new HttpRequestMessage
             {
-                Method = HttpMethod.Get,
-                RequestUri = new Uri($"https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/recipes/{RecipeId}/analyzedInstructions"),
+                Method = HttpMethod.Get, // we are getting because we want to import data to use rather than POSTing
+                RequestUri = new Uri($"https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/recipes/{RecipeId}/analyzedInstructions"), // we are requesting analuzed instructions from the API
                 Headers =
                 {
-                    { "x-rapidapi-key", ApiKey },
+                    { "x-rapidapi-key", ApiKey }, // using our unique api key
                     { "x-rapidapi-host", "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com" },
                 },
             };
             var response = await client.SendAsync(request);
-            lastInstructionsRequestTime = DateTime.Now;
+            lastInstructionsRequestTime = DateTime.Now; // marking when we last did a request
 
-            if (response.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode) // if we get a 200 response code
             {
-                var jsonString2 = await response.Content.ReadAsStringAsync();
-                var analyzedInstructions = System.Text.Json.JsonSerializer.Deserialize<List<Recipe>>(jsonString2);
+                var jsonString2 = await response.Content.ReadAsStringAsync(); // serializing the JSON into a String so the rest of our program can easily interact with it
+                var analyzedInstructions = System.Text.Json.JsonSerializer.Deserialize<List<Recipe>>(jsonString2); // deserailizing into a list of recipes to match our types
                 
                 if (analyzedInstructions != null && analyzedInstructions.Count > 0)
                 {
-                    AnalyzedInstructions = analyzedInstructions[0].steps;
+                    AnalyzedInstructions = analyzedInstructions[0].steps; 
                 }
-                StateHasChanged(); 
+                StateHasChanged(); // making sure that rerendering occurs so the updates 
             }
             else
             {
@@ -153,10 +153,10 @@ else
                 StateHasChanged();
             });
         }
-        finally
+        finally // execute the stuff below regardless of outcome
         {
-            isSearchingInstructions = false;
-            apiCallSemaphore.Release();
+            isSearchingInstructions = false; // set the flag to false
+            apiCallSemaphore.Release(); // now other tasks can be performed
         }
     }
 
@@ -166,9 +166,9 @@ else
         try
         {
             if (isSearchingIngredients) return;
-            isSearchingIngredients = true;
+            isSearchingIngredients = true; // now set this flag to true
 
-            var timeSinceLastRequest = DateTime.Now - lastIngredientsRequestTime;
+            var timeSinceLastRequest = DateTime.Now - lastIngredientsRequestTime; // calculate time since last request
             if (timeSinceLastRequest.TotalMilliseconds < MIN_REQUEST_INTERVAL)
             {
                 await Task.Delay(MIN_REQUEST_INTERVAL - (int)timeSinceLastRequest.TotalMilliseconds);
@@ -177,11 +177,11 @@ else
             using var client = new HttpClient();
             var request = new HttpRequestMessage
             {
-                Method = HttpMethod.Get,
-                RequestUri = new Uri($"https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/recipes/{RecipeId}/information"),
+                Method = HttpMethod.Get, // receiving info from API
+                RequestUri = new Uri($"https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/recipes/{RecipeId}/information"), // we are getting information of a recipe bc that is where the ingredient info is stored
                 Headers =
                 {
-                    {"x-rapidapi-key", ApiKey},
+                    {"x-rapidapi-key", ApiKey}, // using our key and the host that spoonacular partners w is rapid api
                     {"x-rapidapi-host", "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com"},
                 },
             };
@@ -189,12 +189,12 @@ else
             var response = await client.SendAsync(request);
             lastIngredientsRequestTime = DateTime.Now;
 
-            if (!response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode) // if not 200 response
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                Logger.LogError("API request failed with status {StatusCode}: {ErrorContent}", 
+                Logger.LogError("API request failed with status {StatusCode}: {ErrorContent}", // tell us the error
                     response.StatusCode, errorContent);
-                errorMessage = $"API error: {response.StatusCode}";
+                errorMessage = $"API error: {response.StatusCode}"; 
                 return;
             }
 
@@ -203,9 +203,9 @@ else
 
             try
             {
-                var options = new JsonSerializerOptions
+                var options = new JsonSerializerOptions //JsonSerializerOptions is a class in .NET lets use customize how JSOn is serialized and deserialized
                 {
-                    PropertyNameCaseInsensitive = true,
+                    PropertyNameCaseInsensitive = true, // we want insensitivity and trailing commas so taht we do not accidentally miss some ingerdient due to some small differences
                     AllowTrailingCommas = true
                 };
 
