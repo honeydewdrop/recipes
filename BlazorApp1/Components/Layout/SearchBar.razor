@@ -162,12 +162,11 @@
                     <span>@Math.Round(recipe.Taste.Savoriness, 0)</span>
                 </div>
                 <div class="taste-item">
-                <div class="taste-item spiciness">
-                    <span class="taste-label">Spiciness:</span>
-                    <span>@Math.Round(recipe.Taste.Spiciness, 0)</span>
+                    <span class="taste-label">Fattiness:</span>
+                    <div class="taste-bar" style="--value: @(recipe.Taste.Fattiness)%;"></div>
+                    <span>@Math.Round(recipe.Taste.Fattiness, 0)</span>
                 </div>
             </div>
-</div>
         }
     </div>
                     </div>
@@ -460,8 +459,8 @@ private async Task FetchRecipes()
         errorMessage = "Please select at least one ingredient.";
         allRecipes.Clear();
         displayedRecipes.Clear();
-        searchRan = false;
-        StateHasChanged();
+        searchRan = false;        //Reset search to false
+        StateHasChanged();        //Update ui
         return;
     }
 
@@ -519,15 +518,19 @@ private async Task FetchRecipes()
         var jsonString = await response.Content.ReadAsStringAsync();
         var searchResults = System.Text.Json.JsonSerializer.Deserialize<ComplexSearchResponse>(jsonString);
 
+        //If recipes are found process
         if (searchResults?.Results != null && searchResults.Results.Any())
         {
             Logger.LogInformation($"Found {searchResults.Results.Count} recipes");
-            var recipeIds = searchResults.Results.Select(r => r.Id).ToList();
-            var detailedRecipes = await GetBulkRecipeInformation(recipeIds);
+
+            //Get recipeID from results
+            var recipeIds = searchResults.Results.Select(r => r.Id).ToList(); 
+            var detailedRecipes = await GetBulkRecipeInformation(recipeIds);    //Get details
 
             // Add recipes one by one and update UI
             foreach (var recipe in detailedRecipes)
             {
+
                 recipe.UsedIngredientCount = CountMatchingIngredients(recipe);
                 allRecipes.Add(recipe);
                 
@@ -536,6 +539,7 @@ private async Task FetchRecipes()
                 {
                     try
                     {
+                        //Get the taste profile
                         recipe.Taste = await GetRecipeTaste(recipe.Id);
                         await InvokeAsync(() =>
                         {
@@ -587,7 +591,10 @@ private async Task<Taste> GetRecipeTaste(int recipeId)
     await apiCallSemaphore.WaitAsync();
     try
     {
+        //Calculate time elapsed for api calls
         var timeSinceLastCall = DateTime.Now - lastApiCallTime;
+
+        //Delay api call request time to ensure limit rates
         if (timeSinceLastCall.TotalMilliseconds < MIN_REQUEST_INTERVAL_MS)
         {
             var delayTime = (int)(MIN_REQUEST_INTERVAL_MS - timeSinceLastCall.TotalMilliseconds);
@@ -624,6 +631,7 @@ private async Task<Taste> GetRecipeTaste(int recipeId)
     }
     catch
     {
+        //Return empty list
         return new Taste();
     }
     finally
@@ -634,6 +642,7 @@ private async Task<Taste> GetRecipeTaste(int recipeId)
 
 private async Task<List<Recipe>> GetBulkRecipeInformation(List<int> recipeIds)
 {
+
     await apiCallSemaphore.WaitAsync();
     try
     {
