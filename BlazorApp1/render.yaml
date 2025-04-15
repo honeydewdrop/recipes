@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: pantrytoplate
+    env: dotnet
+    buildCommand: dotnet publish BlazorApp1.csproj -c Release -o ./bin/Release/net7.0/publish
+    publishPath: ./bin/Release/net7.0/publish
+    startCommand: dotnet BlazorApp1.dll
+    region: oregon
+    plan: free
