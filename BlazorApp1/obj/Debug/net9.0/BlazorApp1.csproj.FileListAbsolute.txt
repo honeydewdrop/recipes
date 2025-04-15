@@ -77,7 +77,6 @@ C:\Users\harry\PLTermProject\recipes\BlazorApp1\obj\Debug\net9.0\refint\BlazorAp
 C:\Users\harry\PLTermProject\recipes\BlazorApp1\obj\Debug\net9.0\BlazorApp1.pdb
 C:\Users\harry\PLTermProject\recipes\BlazorApp1\obj\Debug\net9.0\BlazorApp1.genruntimeconfig.cache
 C:\Users\harry\PLTermProject\recipes\BlazorApp1\obj\Debug\net9.0\ref\BlazorApp1.dll
-C:\Users\samia\MyFolder\blazorapp1\bin\Debug\net9.0\appsettings.Development.json
 C:\Users\samia\MyFolder\blazorapp1\bin\Debug\net9.0\appsettings.json
 C:\Users\samia\MyFolder\blazorapp1\bin\Debug\net9.0\BlazorApp1.staticwebassets.runtime.json
 C:\Users\samia\MyFolder\blazorapp1\bin\Debug\net9.0\BlazorApp1.staticwebassets.endpoints.json
@@ -158,5 +157,5 @@ C:\Users\samia\MyFolder\blazorapp1\obj\Debug\net9.0\BlazorApp1.genruntimeconfig.
 C:\Users\samia\MyFolder\blazorapp1\obj\Debug\net9.0\ref\BlazorApp1.dll
 C:\Users\harry\PLTermProject\recipes\BlazorApp1\obj\Debug\net9.0\compressed\ysu4imbah3-l35i4wx0qu.gz
 C:\Users\harry\PLTermProject\recipes\BlazorApp1\obj\Debug\net9.0\compressed\uxxncn5hnr-l35i4wx0qu.gz
-C:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\compressed\ysu4imbah3-hys619bo51.gz
-C:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\compressed\uxxncn5hnr-hys619bo51.gz
+C:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\compressed\ysu4imbah3-7f7sjgtxio.gz
+C:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\compressed\uxxncn5hnr-7f7sjgtxio.gz

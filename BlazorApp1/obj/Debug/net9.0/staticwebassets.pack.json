@@ -2,7 +2,7 @@
   "Files": [
     {
       "Id": "C:\\Users\\samia\\MyFolder\\BlazorApp1\\obj\\Debug\\net9.0\\scopedcss\\projectbundle\\BlazorApp1.bundle.scp.css",
-      "PackagePath": "staticwebassets\\BlazorApp1.hys619bo51.bundle.scp.css"
+      "PackagePath": "staticwebassets\\BlazorApp1.7f7sjgtxio.bundle.scp.css"
     },
     {
       "Id": "C:\\Users\\samia\\MyFolder\\BlazorApp1\\wwwroot\\NyataFtrRegular-eZ1Vp.otf",
@@ -13,12 +13,8 @@
       "PackagePath": "staticwebassets\\app.css"
     },
     {
-      "Id": "C:\\Users\\samia\\MyFolder\\BlazorApp1\\wwwroot\\favicon.png",
-      "PackagePath": "staticwebassets\\favicon.png"
-    },
-    {
-      "Id": "C:\\Users\\samia\\MyFolder\\BlazorApp1\\wwwroot\\food-pantry-clipart-xl.png",
-      "PackagePath": "staticwebassets\\food-pantry-clipart-xl.png"
+      "Id": "C:\\Users\\samia\\MyFolder\\BlazorApp1\\wwwroot\\favicon2.png",
+      "PackagePath": "staticwebassets\\favicon2.png"
     },
     {
       "Id": "C:\\Users\\samia\\MyFolder\\BlazorApp1\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css",

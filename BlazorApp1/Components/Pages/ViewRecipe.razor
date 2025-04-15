@@ -14,8 +14,6 @@
 <h3> @recipe.Title</h3>
 
 <img src="@recipe.Image" style="transform: translateX(60vh)" alt="Recipe Image">
-@* 
-<button @onclick="NavigateToAnotherPage">Back</button> *@
 
 
 @if (AnalyzedIngredients != null && AnalyzedIngredients.Count > 0) @*if there are ingredients to display *@
@@ -198,7 +196,7 @@ else
                 return;
             }
 
-            var jsonString = await response.Content.ReadAsStringAsync();
+            var jsonString = await response.Content.ReadAsStringAsync(); //read the json response as a striing so we can easily use the data elsewhere in our project
             Logger.LogInformation("Received API response: {JsonString}", jsonString);
 
             try
@@ -211,97 +209,91 @@ else
 
                 var apiRecipe = JsonSerializer.Deserialize<Recipe>(jsonString, options);
 
-                if (apiRecipe == null)
+                if (apiRecipe == null) // if we don't get anything in apiRecipe
                 {
-                    Logger.LogError("Deserialization returned null");
+                    Logger.LogError("Deserialization returned null"); // return error status message
                     errorMessage = "Failed to parse recipe data";
                     return;
                 }
 
-                recipe = apiRecipe;
-                AnalyzedIngredients = apiRecipe.ExtendedIngredients ?? new List<ExtendedIngredient>();
+                recipe = apiRecipe; // set the recipe
+                AnalyzedIngredients = apiRecipe.ExtendedIngredients ?? new List<ExtendedIngredient>(); // Set AnalyzedIngredients to the list of ingredients from apiRecipe, unless that list is null in which case, just use an empty list
             }
-            catch (JsonException ex)
+            catch (JsonException ex) // if theres a JSON error
             {
                 Logger.LogError(ex, "JSON deserialization failed");
                 errorMessage = "Failed to process recipe data";
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) 
         {
             Logger.LogError(ex, "Error in RecipeIngredientThrottle");
-            errorMessage = ex.Message.Contains("429") 
+            errorMessage = ex.Message.Contains("429") //making sure we dont go over the rate limit which is very important because if we do we could get banned 
                 ? "Rate limit reached. Please wait before trying again." 
                 : $"Error: {ex.Message}";
         }
         finally
         {
-            isSearchingIngredients = false;
-            apiCallSemaphore.Release();
+            isSearchingIngredients = false; // when done the flag is set to false 
+            apiCallSemaphore.Release(); // allow the next task to execute
             await InvokeAsync(StateHasChanged);
         }
     }
-
-    private void NavigateToAnotherPage()
-    {
-        NavigationManager.NavigateTo("");
-        Console.Write("Button clicked.");
-    }
     
-    public class Recipe
+    public class Recipe // recipe class with multiple attributes
     {
-        [JsonPropertyName("id")]
+        [JsonPropertyName("id")] // recipe id to find a match in the spoonacular database
         public int Id { get; set; }
 
-        [JsonPropertyName("title")]
+        [JsonPropertyName("title")] // title to pull from the database
         public string Title { get; set; } = "";
 
-        [JsonPropertyName("extendedIngredients")]
+        [JsonPropertyName("extendedIngredients")] // extended ingerdients list matched to provided extended ingriednts list from spoonacular
         public List<ExtendedIngredient> ExtendedIngredients { get; set; } = new List<ExtendedIngredient>();
 
-        [JsonPropertyName("image")]
+        [JsonPropertyName("image")] // the picture that is provided from spoonacular
         public string Image { get; set; } = "";
 
-        [JsonPropertyName("instructions")]
+        [JsonPropertyName("instructions")] // instruction that come from spoonacular it is a string with the steps just all put together afetr being deserialized
         public string Instructions { get; set; } = "";
 
-        [JsonPropertyName("steps")]
+        [JsonPropertyName("steps")] // list of step objects 
         public List<Steps> steps { get; set; } = new List<Steps>();
     }
 
-    public class ExtendedIngredient
+    public class ExtendedIngredient // extended inigredient object has attributes to it as seen in the spoonacular docs
     {
-        [JsonPropertyName("id")]
+        [JsonPropertyName("id")] // id of ingerdient
         public int Id { get; set; }
 
-        [JsonPropertyName("name")]
+        [JsonPropertyName("name")] // name of ingredient
         public string Name { get; set; } = "";
 
-        [JsonPropertyName("original")]
+        [JsonPropertyName("original")] // basic, original name for ingredient
         public string Original { get; set; } = "";
 
-        [JsonPropertyName("amount")]
+        [JsonPropertyName("amount")] // how much of the ingredient you need, does not have to be a whole number
         public decimal Amount { get; set; }
 
-        [JsonPropertyName("unit")]
+        [JsonPropertyName("unit")] // what kind of measuring unit like cups, ounces, etc
         public string Unit { get; set; } = "";
     }
     
-    public class analyzedIngredients
+    public class analyzedIngredients // basically ingerdients that have been processed to be called by their original anmes
     {
         [JsonPropertyName("extendedIngredients")]
-        public List<ExtendedIngredient> ExtendedIngredients {get; set; }
+        public List<ExtendedIngredient> ExtendedIngredients {get; set; } // of type extended ingredient bc thats where the original comes from  
     }
     
-    public class analyzedInstructions
+    public class analyzedInstructions // after the steps have been processed
     {
-        [JsonPropertyName("steps")] 
+        [JsonPropertyName("steps")] // has steps attribute which is a list of steps
         public List<Steps> steps { get; set; }
     }
     
-    public class Steps
+    public class Steps // steps object aka instructions
     {
-        [JsonPropertyName("step")]
+        [JsonPropertyName("step")] // has the strigs of instructions aka steps
         public string step {get; set; } = "";
     }
 }
