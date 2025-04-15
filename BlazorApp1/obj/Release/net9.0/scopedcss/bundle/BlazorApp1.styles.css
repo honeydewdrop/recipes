@@ -1,0 +1,194 @@
+/* _content/BlazorApp1/Components/Layout/MainLayout.razor.rz.scp.css */
+html[b-j65y7q72mt], body[b-j65y7q72mt] {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.page[b-j65y7q72mt] {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background-color: #FFFFFF;
+    height: 100vh;
+    width: 100vw;
+}
+
+main[b-j65y7q72mt] {
+    flex: 1;
+}
+
+@media (max-width: 640.98px) {
+    .top-row[b-j65y7q72mt] {
+        justify-content: space-between;
+    }
+
+    .top-row[b-j65y7q72mt]  a, .top-row[b-j65y7q72mt]  .btn-link {
+        margin-left: 0;
+    }
+}
+
+#blazor-error-ui[b-j65y7q72mt] {
+    color-scheme: light only;
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss[b-j65y7q72mt] {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
+/* _content/BlazorApp1/Components/Layout/SearchBar.razor.rz.scp.css */
+/* Apply border-box box-sizing globally */
+*[b-8i7f8iqa4a] {
+    box-sizing: border-box;
+}
+
+/* Set html and body minimum height to full viewport height and limit body width */
+html[b-8i7f8iqa4a], body[b-8i7f8iqa4a] {
+    min-height: 100vh; /* Minimum height of 100% of the viewport height */
+    max-width: 50vh;   /* Maximum width set to 50% of the viewport height */
+}
+
+/* Center the search container and apply padding */
+.search-container[b-8i7f8iqa4a] {
+    max-width: 800px; /* Set maximum width to 800px */
+    margin: 0 auto;   /* Center the container horizontally */
+    padding: 1rem;    /* Apply 1rem padding inside the container */
+}
+
+/* Style the search box with flexible layout and spacing */
+.search-box[b-8i7f8iqa4a] {
+    display: flex;        /* Use flexbox for layout */
+    gap: 1rem;            /* Add space between the elements */
+    margin-bottom: 1.5rem; /* Add margin below the search box */
+}
+
+/* Style the search input wrapper with relative positioning and flexible layout */
+.search-input-wrapper[b-8i7f8iqa4a] {
+    position: relative; /* Use relative positioning for absolute child elements */
+    flex: 1;            /* Allow the wrapper to grow and take available space */
+    min-height: 50px;    /* Minimum height of 50px */
+}
+
+/* Container for ingredient tags, positioned absolutely to fill the wrapper */
+.ingredient-tags-container[b-8i7f8iqa4a] {
+    position: absolute; /* Absolutely position within the parent wrapper */
+    top: 0; left: 0; right: 0; bottom: 0; /* Fill the entire input wrapper */
+    display: flex;       /* Use flexbox for layout */
+    align-items: center; /* Align items vertically in the center */
+    flex-wrap: wrap;     /* Allow ingredients to wrap onto new lines */
+    gap: 0.5rem;         /* Add gap between ingredient tags */
+    padding: 0 1rem;     /* Add padding around the container */
+    margin-top: 1.3rem;
+    pointer-events: none; /* Disable pointer events to prevent interaction */
+    overflow: hidden;    /* Hide any overflow */
+}
+
+/* Style for the search input field */
+.search-input[b-8i7f8iqa4a] {
+    width: 100%;         /* Full width of the parent container */
+    height: 100%;        /* Full height of the parent container */
+    padding: 0.75rem 1rem; /* Apply padding inside the input */
+    border: 1vh solid #ced4da; /* Light gray border */
+    border-radius: 2vh; /* Rounded corners */
+    font-size: 1rem;     /* Set font size */
+    background: transparent; /* Make the background transparent */
+    position: relative;  /* Position relative to allow z-index manipulation */
+    z-index: 1;         /* Ensure the input is on top of the tags */
+    transform: translateY(1vh); /* Slight vertical translation */
+}
+
+/* Focused state for the search input */
+.search-input:focus[b-8i7f8iqa4a] {
+    outline: none;               /* Remove the default focus outline */
+    border-color: #1a73e8;       /* Change the border color to blue */
+    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2); /* Add a subtle shadow for focus */
+}
+
+/* Style for individual ingredient tags */
+.ingredient-tag[b-8i7f8iqa4a] {
+    align-items: center; /* Vertically align items inside the tag */
+    padding: 0.35rem 0.75rem; /* Apply padding inside the tag */
+    background-color: #e9f5ff; /* Light blue background */
+    border-radius: 2vh; /* Round corners */
+    font-size: 0.9rem;   /* Slightly smaller font size */
+    color: #1a73e8;      /* Blue text color */
+    pointer-events: auto; /* Enable pointer events to interact with the tag */
+    z-index: 2;         /* Ensure the tag is above the input */
+    transform: translate(53vh, -15.5vh); /* Transform tag's position for custom styling */
+}
+
+/* Style for the remove tag button */
+.remove-tag[b-8i7f8iqa4a] {
+    margin-left: 0.5rem; /* Add space between the tag and the remove button */
+    background: none;    /* Remove the background */
+    border: none;        /* Remove the border */
+    color: #5f6368;      /* Set the color to a light gray */
+    cursor: pointer;     /* Set cursor to pointer to indicate it's clickable */
+    font-size: 1rem;     /* Set font size */
+    line-height: 1;       /* Set line height */
+    padding: 0 0.25rem;  /* Apply padding around the button */
+}
+
+/* Hover state for the remove tag button */
+.remove-tag:hover[b-8i7f8iqa4a] {
+    color: #d93025; /* Change color to red when hovered */
+}
+
+/* Style for the search button */
+.search-button[b-8i7f8iqa4a] {
+    padding: 0.75rem 1.5rem; /* Apply padding inside the button */
+    background-color: #1a73e8; /* Blue background */
+    color: white;            /* White text color */
+    border: none;            /* Remove border */
+    border-radius: 8px;      /* Round corners */
+    font-size: 1rem;         /* Set font size */
+    cursor: pointer;         /* Set cursor to pointer */
+    transition: background-color 0.2s; /* Add transition effect on hover */
+    white-space: nowrap;     /* Prevent text from wrapping */
+}
+
+/* Hover state for the search button */
+.search-button:hover[b-8i7f8iqa4a] {
+    background-color: #0d62c9; /* Change background color to darker blue on hover */
+}
+
+/* Style for the view more button */
+.view-more-btn[b-8i7f8iqa4a] {
+    padding: 0.75rem 1.5rem; /* Apply padding inside the button */
+    background-color: #1a73e8; /* Blue background */
+    color: white;            /* White text color */
+    border: none;            /* Remove border */
+    border-radius: 8px;      /* Round corners */
+    font-size: 1rem;         /* Set font size */
+    cursor: pointer;         /* Set cursor to pointer */
+    transition: background-color 0.2s; /* Add transition effect on hover */
+    white-space: nowrap;     /* Prevent text from wrapping */
+    transform: translateX(82vh); /* Apply a horizontal translation */
+}
+
+/* Hover state for the view more button */
+.view-more-btn:hover[b-8i7f8iqa4a] {
+    background-color: #0d62c9; /* Change background color to darker blue on hover */
+}
+
+/* Styling for allergy filters with custom translation */
+.allergy-filters[b-8i7f8iqa4a] {
+    transform: translate(0vh, -12vh); /* Apply translation */
+}
+
+/* Styling for diet filters with custom translation */
+.diet-filters[b-8i7f8iqa4a] {
+    transform: translate(6vh, -5vh); /* Apply translation */
+}
