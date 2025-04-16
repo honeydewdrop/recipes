@@ -32,6 +32,13 @@
                     class="search-input" />
         </div>
         <button @onclick="FetchRecipes" class="search-button">Find Recipes</button> @*anonymous function *@
+        @if (isLoadingRecipes)
+{
+    <div class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading recipes...</div>
+    </div>
+}
     </div>
  
 
@@ -102,14 +109,12 @@
     @if (suggestions.Any()) @*if there any autofill suggestions*@
     {
         <div class="suggestions-container">
-            <div class="suggestions-list">
                 @foreach (var suggestion in suggestions)
                 {
                     <div class="suggestion-item" style="border-radius: 0.2vh" @onclick="() => SelectIngredient(suggestion)"> @*anonynmous inline function*@
                         @suggestion.Name
                     </div>
                 }
-            </div>
         </div>
     }
 
@@ -161,13 +166,13 @@
   grid-gap: 2rem;
   grid-template-columns: repeat(4, minmax(40vh, 1fr)); /* Strict 4 columns */
   align-items: start;
-  padding: 0 2rem; 
+  padding: 0 0rem; 
   box-sizing: border-box; 
 }
 
 .grid__item {
   background-color: #fff;
-  border-radius: 0.4rem;
+  border-radius: 0rem;
   width: 100%; 
   height: 100%;
   overflow: hidden;
@@ -203,25 +208,27 @@
   display: block;
   width: 100%;
   height: 18rem;
-  object-fit: cover;
 }
 .card__content {
-  padding: 3rem 2rem;
+  padding: 1rem 1rem;
+  height: 10rem;
+  padding-bottom: 0rem;
 }
 .card__header {
   font-size: 1.5rem;
-  font-weight: 500;
   color: #0d0d0d;
 }
 .card__text {
   font-size: 1.5rem;
   letter-spacing: 0.1rem;
   line-height: 1.7;
+    margin-bottom: 0;
+  padding-bottom: 0;
   color: #3d3d3d;
 }
 
 .suggestions-container {
-    transform: translate(80vh,-5vh);
+    transform: translate(50em,-8em);
 }
 </style>
 
@@ -256,6 +263,7 @@
     private bool isSearching = false; // To prevent overlapping requests
 
     private bool searchRan = false; // so we don't display the no matching recipes message before searching
+    private bool isLoadingRecipes = false;
     private DateTime lastApiCallTime = DateTime.MinValue;
 private readonly SemaphoreSlim apiCallSemaphore = new SemaphoreSlim(1, 1);
 private const int MIN_REQUEST_INTERVAL_MS = 1000; // 1 second between requests
@@ -426,6 +434,7 @@ private async Task FetchRecipes() // asynchronous fucntion which runs at the sam
 
     try
     {
+        isLoadingRecipes = true;
         using var client = new HttpClient();
         
         // Initial search to get recipe IDs
@@ -490,6 +499,7 @@ private async Task FetchRecipes() // asynchronous fucntion which runs at the sam
         UpdateDisplayedRecipes();
         StateHasChanged();
         searchRan = true;
+        isLoadingRecipes = false;
     }
     catch (Exception ex)
     {
