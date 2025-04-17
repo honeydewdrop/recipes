@@ -11,7 +11,7 @@ html[b-8i7f8iqa4a], body[b-8i7f8iqa4a] {
 
 /* Center the search container and apply padding */
 .search-container[b-8i7f8iqa4a] {
-    max-width: 800px; /* Set maximum width to 800px */
+    max-width: 80vh; /* Set maximum width to 800px */
     margin: 0 auto;   /* Center the container horizontally */
     padding: 1rem;    /* Apply 1rem padding inside the container */
 }
@@ -75,7 +75,7 @@ html[b-8i7f8iqa4a], body[b-8i7f8iqa4a] {
     color: #1a73e8;      /* Blue text color */
     pointer-events: auto; /* Enable pointer events to interact with the tag */
     z-index: 2;         /* Ensure the tag is above the input */
-    transform: translate(53vh, -15.5vh); /* Transform tag's position for custom styling */
+    transform: translate(53vh, -16.5vh); /* Transform tag's position for custom styling */
 }
 
 /* Style for the remove tag button */
@@ -135,11 +135,13 @@ html[b-8i7f8iqa4a], body[b-8i7f8iqa4a] {
 /* Styling for allergy filters with custom translation */
 .allergy-filters[b-8i7f8iqa4a] {
     transform: translate(0vh, -12vh); /* Apply translation */
+    width: 50vh;
 }
 
 /* Styling for diet filters with custom translation */
 .diet-filters[b-8i7f8iqa4a] {
     transform: translate(6vh, -5vh); /* Apply translation */
+    width: 50vh;
 }
 
 .loading-overlay[b-8i7f8iqa4a] {
@@ -154,7 +156,7 @@ html[b-8i7f8iqa4a], body[b-8i7f8iqa4a] {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 2;
+    z-index: 1;
 }
 
 .loading-spinner[b-8i7f8iqa4a] {

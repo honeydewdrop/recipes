@@ -39,6 +39,14 @@
         <div class="loading-text">Loading recipes...</div>
     </div>
 }
+
+        @if (isLoadingRecipePage)
+{
+    <div class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading recipe page...</div>
+    </div>
+}
     </div>
  
 
@@ -264,6 +272,7 @@
 
     private bool searchRan = false; // so we don't display the no matching recipes message before searching
     private bool isLoadingRecipes = false;
+    private bool isLoadingRecipePage = false;
     private DateTime lastApiCallTime = DateTime.MinValue;
 private readonly SemaphoreSlim apiCallSemaphore = new SemaphoreSlim(1, 1);
 private const int MIN_REQUEST_INTERVAL_MS = 1000; // 1 second between requests
@@ -631,6 +640,8 @@ private void NavigateToRecipe(Recipe recipe)
 {
     try 
     {
+        isLoadingRecipePage = true;
+        StateHasChanged();
         NavigationManager.NavigateTo($"/recipe/{recipe.Id}");
     }
     catch (Exception ex)
