@@ -56,8 +56,6 @@ else
 @code { @*full C# code begins*@
     [Parameter]
     public string RecipeId { get; set; } = ""; 
-
-    public string RecipeTitle { get; set; } = "";
     private Recipe recipe = new(); @*new Recipe instance called recipe*@
 
     private List<Steps> AnalyzedInstructions = new(); @*new List of steps instance called analyzed instructions *@
@@ -99,10 +97,10 @@ else
         try
         {
             if (isSearchingInstructions) return;
-            isSearchingInstructions = true;
+            isSearchingInstructions = true; // 
 
             var timeSinceLastRequest = DateTime.Now - lastInstructionsRequestTime;
-            if (timeSinceLastRequest.TotalMilliseconds < MIN_REQUEST_INTERVAL)
+            if (timeSinceLastRequest.TotalMilliseconds < MIN_REQUEST_INTERVAL) // calculating time for api calls
             {
                 await Task.Delay(MIN_REQUEST_INTERVAL - (int)timeSinceLastRequest.TotalMilliseconds);
             }
@@ -138,7 +136,7 @@ else
                 Logger.LogError(errorMessage);
             }
             
-            var jsonString = await response.Content.ReadAsStringAsync();
+            var jsonString = await response.Content.ReadAsStringAsync(); 
             Logger.LogInformation($"API response received for instructions: {jsonString}");
         }
         catch (Exception ex)
@@ -203,7 +201,7 @@ else
             {
                 var options = new JsonSerializerOptions //JsonSerializerOptions is a class in .NET lets use customize how JSOn is serialized and deserialized
                 {
-                    PropertyNameCaseInsensitive = true, // we want insensitivity and trailing commas so taht we do not accidentally miss some ingerdient due to some small differences
+                    PropertyNameCaseInsensitive = true, // we want insensitivity and trailing commas so that we do not accidentally miss some ingredients due to some small differences
                     AllowTrailingCommas = true
                 };
 

@@ -156,6 +156,6 @@ C:\Users\samia\MyFolder\blazorapp1\obj\Debug\net9.0\BlazorApp1.genruntimeconfig.
 C:\Users\samia\MyFolder\blazorapp1\obj\Debug\net9.0\ref\BlazorApp1.dll
 C:\Users\harry\PLTermProject\recipes\BlazorApp1\obj\Debug\net9.0\compressed\ysu4imbah3-l35i4wx0qu.gz
 C:\Users\harry\PLTermProject\recipes\BlazorApp1\obj\Debug\net9.0\compressed\uxxncn5hnr-l35i4wx0qu.gz
-C:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\compressed\psnyflj9j1-b61671v4wv.gz
-C:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\compressed\ysu4imbah3-15lt01z0z5.gz
-C:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\compressed\uxxncn5hnr-15lt01z0z5.gz
+C:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\compressed\psnyflj9j1-am5h9a470e.gz
+C:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\compressed\ysu4imbah3-43x5kk7cxx.gz
+C:\Users\samia\MyFolder\BlazorApp1\obj\Debug\net9.0\compressed\uxxncn5hnr-43x5kk7cxx.gz

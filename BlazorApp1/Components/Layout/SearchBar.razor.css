@@ -32,62 +32,62 @@ html, body {
 
 /* Container for ingredient tags, positioned absolutely to fill the wrapper */
 .ingredient-tags-container {
-    position: absolute; /* Absolutely position within the parent wrapper */
-    top: 0; left: 0; right: 0; bottom: 0; /* Fill the entire input wrapper */
-    display: flex;       /* Use flexbox for layout */
-    align-items: center; /* Align items vertically in the center */
-    flex-wrap: wrap;     /* Allow ingredients to wrap onto new lines */
-    gap: 0.5rem;         /* Add gap between ingredient tags */
-    padding: 0 1rem;     /* Add padding around the container */
+    position: absolute; 
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;       
+    align-items: center;
+    flex-wrap: wrap;     
+    gap: 0.5rem;         
+    padding: 0 1rem;     
     margin-top: 1.5rem;
-    pointer-events: none; /* Disable pointer events to prevent interaction */
-    overflow: hidden;    /* Hide any overflow */
+    pointer-events: none; 
+    overflow: hidden;   
 }
 
 /* Style for the search input field */
 .search-input {
-    width: 100%;         /* Full width of the parent container */
-    height: 100%;        /* Full height of the parent container */
-    padding: 0.75rem 1rem; /* Apply padding inside the input */
-    border: 1vh solid #ced4da; /* Light gray border */
-    border-radius: 2vh; /* Rounded corners */
-    font-size: 1rem;     /* Set font size */
-    background: transparent; /* Make the background transparent */
-    position: relative;  /* Position relative to allow z-index manipulation */
-    z-index: 1;         /* Ensure the input is on top of the tags */
-    transform: translateY(1vh); /* Slight vertical translation */
+    width: 100%;         
+    height: 100%;       
+    padding: 0.75rem 1rem; 
+    border: 1vh solid #ced4da; 
+    border-radius: 2vh; 
+    font-size: 1rem;    
+    background: transparent; 
+    position: relative;  
+    z-index: 1;        
+    transform: translateY(1vh); 
 }
 
 /* Focused state for the search input */
 .search-input:focus {
-    outline: none;               /* Remove the default focus outline */
-    border-color: #1a73e8;       /* Change the border color to blue */
-    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2); /* Add a subtle shadow for focus */
+    outline: none;              
+    border-color: #1a73e8;      
+    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2); 
 }
 
 /* Style for individual ingredient tags */
 .ingredient-tag {
-    align-items: center; /* Vertically align items inside the tag */
-    padding: 0.35rem 0.75rem; /* Apply padding inside the tag */
-    background-color: #e9f5ff; /* Light blue background */
-    border-radius: 2vh; /* Round corners */
-    font-size: 0.9rem;   /* Slightly smaller font size */
-    color: #1a73e8;      /* Blue text color */
-    pointer-events: auto; /* Enable pointer events to interact with the tag */
-    z-index: 2;         /* Ensure the tag is above the input */
-    transform: translate(53vh, -16.5vh); /* Transform tag's position for custom styling */
+    align-items: center; 
+    padding: 0.35rem 0.75rem; 
+    background-color: #e9f5ff; 
+    border-radius: 2vh; 
+    font-size: 0.9rem;   
+    color: #1a73e8;      
+    pointer-events: auto; 
+    z-index: 2;         
+    transform: translate(53vh, -16.5vh); 
 }
 
 /* Style for the remove tag button */
 .remove-tag {
-    margin-left: 0.5rem; /* Add space between the tag and the remove button */
-    background: none;    /* Remove the background */
-    border: none;        /* Remove the border */
-    color: #5f6368;      /* Set the color to a light gray */
-    cursor: pointer;     /* Set cursor to pointer to indicate it's clickable */
-    font-size: 1rem;     /* Set font size */
-    line-height: 1;       /* Set line height */
-    padding: 0 0.25rem;  /* Apply padding around the button */
+    margin-left: 0.5rem; 
+    background: none;   
+    border: none;       
+    color: #5f6368;      
+    cursor: pointer;    
+    font-size: 1rem;     
+    line-height: 1;       
+    padding: 0 0.25rem;  
 }
 
 /* Hover state for the remove tag button */
@@ -97,15 +97,15 @@ html, body {
 
 /* Style for the search button */
 .search-button {
-    padding: 0.75rem 1.5rem; /* Apply padding inside the button */
-    background-color: #1a73e8; /* Blue background */
-    color: white;            /* White text color */
-    border: none;            /* Remove border */
-    border-radius: 8px;      /* Round corners */
-    font-size: 1rem;         /* Set font size */
-    cursor: pointer;         /* Set cursor to pointer */
-    transition: background-color 0.2s; /* Add transition effect on hover */
-    white-space: nowrap;     /* Prevent text from wrapping */
+    padding: 0.75rem 1.5rem; 
+    background-color: #1a73e8;
+    color: white;           
+    border: none;         
+    border-radius: 8px;     
+    font-size: 1rem;       
+    cursor: pointer;         
+    transition: background-color 0.2s;
+    white-space: nowrap;  
 }
 
 /* Hover state for the search button */
@@ -116,15 +116,15 @@ html, body {
 /* Style for the view more button */
 .view-more-btn {
     padding: 0.75rem 1.5rem; /* Apply padding inside the button */
-    background-color: #1a73e8; /* Blue background */
-    color: white;            /* White text color */
-    border: none;            /* Remove border */
-    border-radius: 8px;      /* Round corners */
-    font-size: 1rem;         /* Set font size */
-    cursor: pointer;         /* Set cursor to pointer */
-    transition: background-color 0.2s; /* Add transition effect on hover */
-    white-space: nowrap;     /* Prevent text from wrapping */
-    transform: translateX(82vh); /* Apply a horizontal translation */
+    background-color: #1a73e8;
+    color: white;       
+    border: none;          
+    border-radius: 8px;      
+    font-size: 1rem;      
+    cursor: pointer;      
+    transition: background-color 0.2s;
+    white-space: nowrap;    
+    transform: translateX(82vh); 
 }
 
 /* Hover state for the view more button */
@@ -144,6 +144,7 @@ html, body {
     width: 50vh;
 }
 
+/* styling the loading spinenr that comes up when you click search or a recipe */ 
 .loading-overlay {
     position: fixed;
     top: 0;
