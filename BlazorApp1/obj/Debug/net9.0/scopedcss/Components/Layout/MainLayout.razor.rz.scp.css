@@ -3,7 +3,7 @@ html[b-j65y7q72mt], body[b-j65y7q72mt] {
     margin: 0;
     padding: 0;
 }
-
+/*basic styling for page*/
 .page[b-j65y7q72mt] {
     position: relative;
     display: flex;
@@ -15,7 +15,7 @@ html[b-j65y7q72mt], body[b-j65y7q72mt] {
 main[b-j65y7q72mt] {
     flex: 1;
 }
-
+/*taking into account other screen sizes*/
 @media (max-width: 640.98px) {
     .top-row[b-j65y7q72mt] {
         justify-content: space-between;

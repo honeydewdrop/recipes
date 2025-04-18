@@ -3,7 +3,7 @@ html, body {
     margin: 0;
     padding: 0;
 }
-
+/*basic styling for page*/
 .page {
     position: relative;
     display: flex;
@@ -15,7 +15,7 @@ html, body {
 main {
     flex: 1;
 }
-
+/*taking into account other screen sizes*/
 @media (max-width: 640.98px) {
     .top-row {
         justify-content: space-between;

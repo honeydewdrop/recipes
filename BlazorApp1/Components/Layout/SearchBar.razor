@@ -12,43 +12,62 @@
 
 
 <div class="search-container">
-    <div class="search-box">
-            <div class="ingredient-tags-container">
-                @foreach (var ingredient in selectedIngredients) @*for each loop, C# speciality*@
-                {
-                    <div class="ingredient-tag">
-                        @ingredient.Name
-                        <button @onclick="() => RemoveIngredient(ingredient)" class="remove-tag"> @* anonymous function *@
-                            &times;
-                        </button>
-                    </div>
-                }
-            </div>
-            @*properties for our search input area, handling keyboard interaction*@
-                <input type="text"
-                    @bind="searchQuery" 
-                    @bind:event="oninput"
-                    @onkeyup="HandleKeyUp" 
-                    placeholder="@(selectedIngredients.Any() ? "" : "Search for ingredients...")"
-                    class="search-input" />
+ <div class="search-box" style="position: relative;">
+    <!-- ingredient tags above input -->
+    @if (selectedIngredients.Any())
+    {
+        <div class="ingredient-tags-container">
+            @foreach (var ingredient in selectedIngredients)
+            {
+                <div class="ingredient-tag">
+                    @ingredient.Name
+                    <button @onclick="() => RemoveIngredient(ingredient)" class="remove-tag">&times;</button>
+                </div>
+            }
         </div>
-        <button @onclick="FetchRecipes" class="search-button">Find Recipes</button> @*anonymous function *@
-        @if (isLoadingRecipes) // show spinner
-{
-    <div class="loading-overlay">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Loading recipes...</div>
-    </div>
-}
+    }
 
-        @if (isLoadingRecipePage) // show spinner
-{
-    <div class="loading-overlay">
-        <div class="loading-spinner"></div> 
-        <div class="loading-text">Loading recipe page...</div>
-    </div>
-}
-    </div>
+    <!-- the input itself -->
+    <input type="text"
+           @bind="searchQuery" 
+           @bind:event="oninput"
+           @onkeyup="HandleKeyUp" 
+           placeholder="@(selectedIngredients.Any() ? "" : "Search for ingredients...")"
+           class="search-input" />
+
+    @if (suggestions.Any()) 
+    {
+        <div class="suggestions-container">
+            @foreach (var suggestion in suggestions)
+            {
+                <div class="suggestion-item" @onclick="() => SelectIngredient(suggestion)">
+                    @suggestion.Name
+                </div>
+            }
+        </div>
+    }
+</div>
+
+
+    <button @onclick="FetchRecipes" class="search-button">Find Recipes</button>
+
+    @if (isLoadingRecipes)
+    {
+        <div class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Loading recipes...</div>
+        </div>
+    }
+
+    @if (isLoadingRecipePage)
+    {
+        <div class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Loading recipe page...</div>
+        </div>
+    }
+</div>
+
  
 
     <div class="diet-filters"> @* different checkboxes for diets and allergies *@
@@ -112,19 +131,7 @@
 
     @if (!string.IsNullOrEmpty(errorMessage))
     {
-        <div class="alert alert-danger mt-2" style="transform: translateX(67vh); width: 40vh;">@errorMessage</div>
-    }
-
-    @if (suggestions.Any()) @*if there any autofill suggestions*@
-    {
-        <div class="suggestions-container">
-                @foreach (var suggestion in suggestions)
-                {
-                    <div class="suggestion-item" style="border-radius: 0.2vh" @onclick="() => SelectIngredient(suggestion)"> @*anonynmous inline function*@
-                        @suggestion.Name
-                    </div>
-                }
-        </div>
+        <div class="alert alert-danger mt-2" style="transform: translate(1vh); width: 40vh z-index: -1;">@errorMessage</div>
     }
 
 
@@ -237,7 +244,17 @@
 }
 
 .suggestions-container {
-    transform: translate(50em,-8em);
+    position: absolute;
+    top: 130%; 
+    left: 15vh;
+    right: 15vh;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-top: none;
+    max-height: 25vh;
+    overflow-y: auto;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    z-index: 2;
 }
 </style>
 
