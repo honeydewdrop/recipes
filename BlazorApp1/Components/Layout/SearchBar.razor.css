@@ -130,14 +130,14 @@ html, body {
 
 /* Styling for allergy filters with custom translation */
 .allergy-filters {
-    transform: translate(0vh, -12vh); /* Apply translation */
-    width: 50vh;
+    transform: translate(0vh, -0vh); /*changed this before presentation*/
+    width: 80vh;
 }
 
 /* Styling for diet filters with custom translation */
 .diet-filters {
-    transform: translate(6vh, -5vh); /* Apply translation */
-    width: 50vh;
+    transform: translate(6vh, -1vh); /*changed this before presentation*/
+    width: 80vh;
 }
 
 /* styling the loading spinner that comes up when you click search or a recipe */ 

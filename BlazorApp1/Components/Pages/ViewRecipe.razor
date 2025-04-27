@@ -86,9 +86,9 @@ else
         }
         
         // Sequential execution with proper delay
-        await RecipeIngredientThrottle(); // calling this function
+        await RecipeIngredientThrottle(); // pauses here until ingredients are all gotten
         await Task.Delay(1000); // Ensure minimum 1s between different endpoints
-        await RecipeDataThrottle(); // now calling this function
+        await RecipeDataThrottle(); // pauses here until instructions are all gotten
     }
 
     private async Task RecipeDataThrottle()

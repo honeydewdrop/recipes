@@ -180,18 +180,18 @@ html[b-8i7f8iqa4a], body[b-8i7f8iqa4a] {
 
 /* Styling for allergy filters with custom translation */
 .allergy-filters[b-8i7f8iqa4a] {
-    transform: translate(0vh, -12vh); /* Apply translation */
-    width: 50vh;
+    transform: translate(0vh, -0vh); /* Apply translation */
+    width: 80vh;
 }
 
 /* Styling for diet filters with custom translation */
 .diet-filters[b-8i7f8iqa4a] {
-    transform: translate(6vh, -5vh); /* Apply translation */
-    width: 50vh;
+    transform: translate(6vh, -1vh); /*this 
+    width: 80vh;
 }
 
 /* styling the loading spinner that comes up when you click search or a recipe */ 
-.loading-overlay[b-8i7f8iqa4a] {
+.loading-overlay {
     position: fixed;
     top: 0;
     left: 0;
